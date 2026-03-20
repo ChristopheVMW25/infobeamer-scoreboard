@@ -1,0 +1,8 @@
+[
+    {
+        "title": "Huidige Score",
+        "name": "score_text",
+        "type": "string",
+        "default": "0 - 0"
+    }
+]
