@@ -27,7 +27,7 @@ echo ""
 # ── 1. System update ──────────────────────────────────────────────────────────
 echo "[1/7] Updating system packages..."
 apt-get update -q
-apt-get install -y curl unclutter chromium-browser
+apt-get install -y curl unclutter chromium
 
 # ── 2. Node.js 20 via NodeSource ──────────────────────────────────────────────
 echo "[2/7] Installing Node.js 20..."
@@ -78,7 +78,7 @@ cat > "$AUTOSTART_DIR/scoreboard-display.desktop" << EOF
 [Desktop Entry]
 Type=Application
 Name=Scoreboard Display
-Exec=bash -c 'sleep 8 && chromium-browser --kiosk --noerrdialogs --disable-infobars --disable-session-crashed-bubble --disable-restore-session-state --no-first-run --disable-translate --check-for-update-interval=31536000 --disable-features=TranslateUI http://localhost:3000/display'
+Exec=bash -c 'sleep 8 && chromium --kiosk --noerrdialogs --disable-infobars --disable-session-crashed-bubble --disable-restore-session-state --no-first-run --disable-translate --check-for-update-interval=31536000 --disable-features=TranslateUI http://localhost:3000/display'
 X-GNOME-Autostart-enabled=true
 EOF
 
