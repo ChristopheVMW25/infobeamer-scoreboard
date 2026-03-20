@@ -2,6 +2,28 @@ const express    = require('express');
 const { WebSocketServer } = require('ws');
 const http       = require('http');
 const path       = require('path');
+const fs         = require('fs');
+
+// ── Session storage (JSON file, 30-day retention) ─────────────────────────────
+const DATA_DIR      = path.join(__dirname, 'data');
+const SESSIONS_FILE = path.join(DATA_DIR, 'sessions.json');
+const RETENTION_MS  = 30 * 24 * 60 * 60 * 1000;
+
+function loadSessions() {
+  try {
+    if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+    if (!fs.existsSync(SESSIONS_FILE)) return [];
+    return JSON.parse(fs.readFileSync(SESSIONS_FILE, 'utf8'));
+  } catch { return []; }
+}
+function saveSessions(list) {
+  if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+  fs.writeFileSync(SESSIONS_FILE, JSON.stringify(list, null, 2));
+}
+function pruned(list) {
+  const cutoff = Date.now() - RETENTION_MS;
+  return list.filter(s => new Date(s.date).getTime() > cutoff);
+}
 
 const app    = express();
 const server = http.createServer(app);
@@ -136,6 +158,39 @@ app.get('/api/state',  (_req, res) => res.json(state));
 app.post('/api/state', (req, res) => {
   state = { ...state, ...req.body };
   broadcast(state);
+  res.json({ ok: true });
+});
+
+// ── Sessions REST API ─────────────────────────────────────────────────────────
+app.get('/api/sessions', (_req, res) => {
+  const list = pruned(loadSessions());
+  saveSessions(list);
+  res.json(list);
+});
+
+app.post('/api/sessions', (_req, res) => {
+  let list = pruned(loadSessions());
+  const session = {
+    id:            Date.now().toString(),
+    date:          new Date().toISOString(),
+    home_name:     state.home_name,
+    home_color:    state.home_color,
+    home_score:    state.home_score,
+    away_name:     state.away_name,
+    away_color:    state.away_color,
+    away_score:    state.away_score,
+    total_periods: state.total_periods,
+    duration_min:  state.duration_min,
+    events:        [...state.events],
+  };
+  list = [session, ...list];
+  saveSessions(list);
+  res.json({ ok: true, session });
+});
+
+app.delete('/api/sessions/:id', (req, res) => {
+  let list = loadSessions().filter(s => s.id !== req.params.id);
+  saveSessions(list);
   res.json({ ok: true });
 });
 

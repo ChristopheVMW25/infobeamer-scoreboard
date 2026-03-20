@@ -199,6 +199,26 @@ header h1 { font-family:'Barlow Condensed',sans-serif; font-weight:900; font-siz
 .timeline-del  { background:none; border:none; color:var(--muted); cursor:pointer; font-size:14px; padding:2px 4px; }
 .timeline-del:hover { color:var(--red); }
 
+/* ── Sessions ── */
+.sessions-card { background:var(--surface); border:1px solid var(--border); border-radius:10px; overflow:hidden; }
+.session-row {
+  display:grid; grid-template-columns:70px 1fr auto;
+  align-items:center; gap:12px;
+  padding:10px 18px; border-bottom:1px solid var(--border); font-size:13px;
+}
+.session-row:last-child { border-bottom:none; }
+.session-date { font-size:11px; color:var(--sub); white-space:nowrap; }
+.session-score {
+  display:flex; align-items:center; gap:8px;
+  font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:17px;
+}
+.session-team { display:flex; align-items:center; gap:6px; }
+.session-dot  { width:10px; height:10px; border-radius:2px; flex-shrink:0; }
+.session-vs   { color:var(--gold); font-size:20px; }
+.session-meta { font-size:11px; color:var(--muted); white-space:nowrap; }
+.session-del  { background:none; border:none; color:var(--muted); cursor:pointer; font-size:16px; padding:4px 6px; border-radius:5px; }
+.session-del:hover { color:var(--red); background:rgba(239,68,68,.1); }
+
 /* ── Log ── */
 .log-card { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:12px 16px; }
 .log-card h3 { font-size:11px; text-transform:uppercase; letter-spacing:.5px; color:var(--sub); margin-bottom:8px; }
@@ -249,6 +269,7 @@ header h1 { font-family:'Barlow Condensed',sans-serif; font-weight:900; font-siz
       </div>
       <div class="setup-footer">
         <span class="format-summary" id="format-summary">Pick a format above</span>
+        <button class="ctrl-btn" onclick="saveSession()" style="font-family:'Barlow',sans-serif;font-size:13px;font-weight:600">💾 Save match</button>
         <button class="ctrl-btn danger" onclick="resetAll()">Reset match</button>
       </div>
     </div>
@@ -367,6 +388,16 @@ header h1 { font-family:'Barlow Condensed',sans-serif; font-weight:900; font-siz
       </div>
       <div class="timeline" id="evt-timeline">
         <div style="padding:12px 18px;font-size:12px;color:var(--muted)">No events yet</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sessions -->
+  <div>
+    <div class="section-hdr">Match history <span id="sessions-age" style="font-size:10px;color:var(--muted);text-transform:none;letter-spacing:0">(last 30 days)</span></div>
+    <div class="sessions-card" style="margin-top:8px">
+      <div id="sessions-list">
+        <div style="padding:12px 18px;font-size:12px;color:var(--muted)">No saved matches yet</div>
       </div>
     </div>
   </div>
@@ -621,7 +652,9 @@ function setTime() {
 }
 
 // ── Reset all ─────────────────────────────────────────────────────────────────
-function resetAll() {
+async function resetAll() {
+  const save = confirm('Save this match to history before resetting?');
+  if (save) await saveSession();
   if (!confirm('Reset match to 0–0, period 1, 00:00?')) return;
   sendCmd('reset_match');
   document.getElementById('mm-in').value = 0;
@@ -709,6 +742,69 @@ function renderTimeline(events, homeName, awayName) {
     </div>`;
   }).join('');
 }
+
+// ── Sessions ──────────────────────────────────────────────────────────────────
+async function saveSession() {
+  const r = await fetch('/api/sessions', { method: 'POST' });
+  if (r.ok) { addLog('Match saved to history', 'ok'); loadSessions(); }
+  else       { addLog('Failed to save match', 'err'); }
+}
+
+async function deleteSession(id) {
+  if (!confirm('Delete this match from history?')) return;
+  await fetch('/api/sessions/' + id, { method: 'DELETE' });
+  loadSessions();
+}
+
+async function loadSessions() {
+  try {
+    const r    = await fetch('/api/sessions');
+    const list = await r.json();
+    renderSessions(list);
+  } catch {}
+}
+
+function renderSessions(list) {
+  const el = document.getElementById('sessions-list');
+  if (!list.length) {
+    el.innerHTML = '<div style="padding:12px 18px;font-size:12px;color:var(--muted)">No saved matches yet</div>';
+    return;
+  }
+  el.innerHTML = list.map(s => {
+    const d      = new Date(s.date);
+    const dStr   = d.toLocaleDateString('nl-BE', { day:'2-digit', month:'2-digit', year:'2-digit' });
+    const tStr   = d.toLocaleTimeString('nl-BE', { hour:'2-digit', minute:'2-digit' });
+    const fmt    = s.total_periods === 2 ? `${s.total_periods}×${s.duration_min}m` : `${s.total_periods}q×${s.duration_min}m`;
+    const goals  = (s.events || []).filter(e => e.type === 'goal').length;
+    const evtStr = goals ? `⚽ ${goals}` : '';
+    return `<div class="session-row">
+      <div>
+        <div class="session-date">${dStr}</div>
+        <div class="session-date">${tStr}</div>
+      </div>
+      <div>
+        <div class="session-score">
+          <div class="session-team">
+            <div class="session-dot" style="background:${s.home_color || '#0a1447'}"></div>
+            <span>${s.home_name}</span>
+          </div>
+          <span class="session-vs">${s.home_score}</span>
+          <span style="color:var(--muted);font-size:14px">–</span>
+          <span class="session-vs">${s.away_score}</span>
+          <div class="session-team">
+            <div class="session-dot" style="background:${s.away_color || '#420a0a'}"></div>
+            <span>${s.away_name}</span>
+          </div>
+        </div>
+        <div class="session-meta">${fmt} &nbsp;${evtStr}</div>
+      </div>
+      <button class="session-del" onclick="deleteSession('${s.id}')" title="Delete">🗑</button>
+    </div>`;
+  }).join('');
+}
+
+// Load sessions on startup
+loadSessions();
 
 function setConn(ok) {
   document.getElementById('conn-dot').className   = 'dot ' + (ok ? 'ok' : 'err');
