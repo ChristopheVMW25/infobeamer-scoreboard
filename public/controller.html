@@ -21,22 +21,22 @@
   --text:    #e8eaf2;
   --sub:     #8892a8;
 }
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
 body {
-  background: var(--bg); color: var(--text);
-  font-family: 'Barlow', sans-serif;
-  min-height: 100vh; display: flex; flex-direction: column; align-items: center;
-  padding-bottom: 40px;
+  background:var(--bg); color:var(--text);
+  font-family:'Barlow',sans-serif;
+  min-height:100vh; display:flex; flex-direction:column; align-items:center;
+  padding-bottom:40px;
 }
 
 /* ── Header ── */
 header {
-  width: 100%; background: var(--surface); border-bottom: 1px solid var(--border);
-  padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  width:100%; background:var(--surface); border-bottom:1px solid var(--border);
+  padding:12px 24px; display:flex; align-items:center; justify-content:space-between; gap:12px;
 }
 header h1 { font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:20px; letter-spacing:1px; text-transform:uppercase; }
 .status-pill { display:flex; align-items:center; gap:7px; background:var(--card); border:1px solid var(--border); border-radius:99px; padding:5px 12px; font-size:12px; color:var(--sub); }
-.dot { width:8px; height:8px; border-radius:50%; background:var(--muted); flex-shrink:0; }
+.dot { width:8px; height:8px; border-radius:50%; background:var(--muted); flex-shrink:0; transition:background .3s; }
 .dot.ok  { background:var(--green); box-shadow:0 0 5px var(--green); }
 .dot.err { background:var(--red); }
 
@@ -45,12 +45,6 @@ header h1 { font-family:'Barlow Condensed',sans-serif; font-weight:900; font-siz
 
 /* ── Section header ── */
 .section-hdr { font-size:11px; text-transform:uppercase; letter-spacing:.6px; color:var(--muted); margin-bottom:-6px; padding-left:2px; }
-
-/* ── Connection card ── */
-.conn-card { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:14px 18px; display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
-.conn-card label { font-size:12px; color:var(--sub); white-space:nowrap; }
-.field { background:var(--bg); border:1px solid var(--border); border-radius:7px; color:var(--text); font-family:'Barlow',monospace; font-size:14px; padding:7px 11px; outline:none; transition:border-color .2s; }
-.field:focus { border-color:var(--gold); }
 
 /* ── Match setup card ── */
 .setup-card { background:var(--surface); border:1px solid var(--border); border-radius:10px; overflow:hidden; }
@@ -67,7 +61,6 @@ header h1 { font-family:'Barlow Condensed',sans-serif; font-weight:900; font-siz
 }
 .pill:hover  { background:var(--border); }
 .pill.active { background:var(--gold); color:#000; border-color:var(--gold); }
-.pill.danger-active { background:var(--red); color:#fff; border-color:var(--red); }
 
 .setup-footer { background:var(--card); border-top:1px solid var(--border); padding:10px 18px; display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
 .format-summary { font-size:13px; color:var(--sub); flex:1; }
@@ -188,23 +181,11 @@ header h1 { font-family:'Barlow Condensed',sans-serif; font-weight:900; font-siz
   </div>
   <div class="status-pill">
     <div class="dot" id="conn-dot"></div>
-    <span id="conn-label">Not connected</span>
+    <span id="conn-label">Connecting…</span>
   </div>
 </header>
 
 <div class="main">
-
-  <!-- Connection -->
-  <div>
-    <div class="section-hdr">Connection</div>
-    <div class="conn-card" style="margin-top:8px">
-      <label>Pi IP</label>
-      <input type="text" class="field" id="pi-ip" placeholder="192.168.1.xx" style="min-width:140px">
-      <label>Node ID</label>
-      <input type="text" class="field" id="node-id" placeholder="12345" style="max-width:90px">
-      <button class="ctrl-btn" onclick="testConn()" style="font-family:'Barlow',sans-serif;font-size:13px;font-weight:600">Test</button>
-    </div>
-  </div>
 
   <!-- Match format setup -->
   <div>
@@ -232,7 +213,7 @@ header h1 { font-family:'Barlow Condensed',sans-serif; font-weight:900; font-siz
       </div>
       <div class="setup-footer">
         <span class="format-summary" id="format-summary">Pick a format above</span>
-        <button class="ctrl-btn danger" onclick="resetAll()" style="font-size:13px">Reset match</button>
+        <button class="ctrl-btn danger" onclick="resetAll()">Reset match</button>
       </div>
     </div>
   </div>
@@ -267,7 +248,8 @@ header h1 { font-family:'Barlow Condensed',sans-serif; font-weight:900; font-siz
   <div class="scoreboard">
     <div class="score-row">
       <div class="team-block home">
-        <input class="team-name-input" id="home-name" value="Home" maxlength="14" oninput="sync();push();">
+        <input class="team-name-input" id="home-name" value="Home" maxlength="14"
+               oninput="sendUpdate({home_name: this.value})">
         <div class="score-controls">
           <button class="score-btn" onclick="adj('home',-1)">−</button>
           <div class="score-digit" id="home-score">0</div>
@@ -280,7 +262,8 @@ header h1 { font-family:'Barlow Condensed',sans-serif; font-weight:900; font-siz
         <div class="remain-big"  id="remain-big">— left</div>
       </div>
       <div class="team-block away">
-        <input class="team-name-input" id="away-name" value="Away" maxlength="14" oninput="sync();push();">
+        <input class="team-name-input" id="away-name" value="Away" maxlength="14"
+               oninput="sendUpdate({away_name: this.value})">
         <div class="score-controls">
           <button class="score-btn" onclick="adj('away',-1)">−</button>
           <div class="score-digit" id="away-score">0</div>
@@ -301,279 +284,221 @@ header h1 { font-family:'Barlow Condensed',sans-serif; font-weight:900; font-siz
       <div class="vdiv"></div>
       <span style="font-size:12px;color:var(--sub)">Set time</span>
       <div class="time-input">
-        <input type="number" id="mm-in" value="0" min="0" max="99" oninput="manualTime()">
+        <input type="number" id="mm-in" value="0" min="0" max="99" oninput="setTime()">
         <span class="time-sep">:</span>
-        <input type="number" id="ss-in" value="0" min="0" max="59" oninput="manualTime()">
+        <input type="number" id="ss-in" value="0" min="0" max="59" oninput="setTime()">
       </div>
     </div>
   </div>
 
   <!-- Log -->
   <div class="log-card">
-    <h3>Push log</h3>
+    <h3>Activity log</h3>
     <div class="log-entries" id="log"></div>
   </div>
 
 </div>
 
 <script>
-// ── Match config ──────────────────────────────────────────────────────────────
-const CFG = { periods: 0, duration: 0 };   // 0 = not yet set
+// ── WebSocket ─────────────────────────────────────────────────────────────────
+const wsProto = location.protocol === 'https:' ? 'wss' : 'ws';
+const wsUrl   = `${wsProto}://${location.host}`;
+let   ws, reconnectTimer;
 
-// ── Live state pushed to Pi ───────────────────────────────────────────────────
-const S = {
-  home_name:'Home', away_name:'Away',
-  home_score:0, away_score:0,
-  period:1,      // current period number (1-based)
-  total_periods:2,
-  duration_min:20,
-  minute:0, second:0,
-  match_live:false,
-};
+function connect() {
+  ws = new WebSocket(wsUrl);
+  ws.onopen = () => {
+    clearTimeout(reconnectTimer);
+    setConn(true);
+    addLog('Connected to server', 'ok');
+  };
+  ws.onmessage = ({ data }) => {
+    try {
+      const msg = JSON.parse(data);
+      if (msg.type === 'state') handleState(msg.data);
+    } catch {}
+  };
+  ws.onclose = () => {
+    setConn(false);
+    reconnectTimer = setTimeout(connect, 2000);
+  };
+  ws.onerror = () => ws.close();
+}
+connect();
 
-let clockTimer = null;
-let pushTimer  = null;
+function send(obj) {
+  if (ws && ws.readyState === 1) ws.send(JSON.stringify(obj));
+}
+function sendUpdate(data) { send({ type: 'update', data }); }
+function sendCmd(action, extra) { send({ type: 'command', action, ...extra }); }
 
-// ── Persist settings ──────────────────────────────────────────────────────────
-(function init() {
-  const c = JSON.parse(localStorage.getItem('sb_cfg2') || '{}');
-  if (c.ip)       document.getElementById('pi-ip').value   = c.ip;
-  if (c.nodeId)   document.getElementById('node-id').value = c.nodeId;
-  if (c.periods)  setPeriods(c.periods, true);
-  if (c.duration) setDuration(c.duration, true);
-  sync();
-})();
+// ── Local match config cache (for UI only) ────────────────────────────────────
+const CFG = { periods: 2, duration: 20 };
 
-function saveCfg() {
-  localStorage.setItem('sb_cfg2', JSON.stringify({
-    ip:       document.getElementById('pi-ip').value.trim(),
-    nodeId:   document.getElementById('node-id').value.trim(),
-    periods:  CFG.periods,
-    duration: CFG.duration,
-  }));
+// ── Receive state from server → update all UI ─────────────────────────────────
+function handleState(s) {
+  // Sync CFG from server state
+  CFG.periods  = s.total_periods;
+  CFG.duration = s.duration_min;
+
+  // Scores
+  document.getElementById('home-score').textContent = s.home_score;
+  document.getElementById('away-score').textContent = s.away_score;
+
+  // Team names (only update input if not focused, to avoid caret jump)
+  const hn = document.getElementById('home-name');
+  const an = document.getElementById('away-name');
+  if (document.activeElement !== hn) hn.value = s.home_name;
+  if (document.activeElement !== an) an.value = s.away_name;
+
+  // Centre block
+  const plbl = periodLabel(s.period, s.total_periods);
+  document.getElementById('p-label-big').textContent = plbl;
+  const clock = pad(s.minute) + ':' + pad(s.second);
+  document.getElementById('clock-big').textContent = clock;
+  const rem = Math.max(0, s.duration_min * 60 - (s.minute * 60 + s.second));
+  const rm = Math.floor(rem / 60), rs = rem % 60;
+  const remTxt = rem === 0 ? 'Full time!' : rm > 0 ? rm + 'm left' : rs + 's left';
+  document.getElementById('remain-big').textContent = remTxt;
+
+  // Start button
+  const btn = document.getElementById('btn-start');
+  if (s.match_live) { btn.textContent = '⏸ Pause'; btn.classList.add('active'); }
+  else              { btn.textContent = '▶ Start'; btn.classList.remove('active'); }
+
+  // Period buttons
+  buildPeriodButtons(s.period, s.total_periods);
+
+  // Format pills
+  document.querySelectorAll('#pg-periods .pill').forEach(b => {
+    const n = b.textContent.startsWith('2') ? 2 : 4;
+    b.classList.toggle('active', n === s.total_periods);
+  });
+  document.querySelectorAll('#pg-duration .pill').forEach(b => {
+    b.classList.toggle('active', parseInt(b.textContent) === s.duration_min);
+  });
+  updateFormatSummary(s.total_periods, s.duration_min);
+
+  // Preview
+  updatePreview(s);
 }
 
 // ── Format setup ──────────────────────────────────────────────────────────────
-function setPeriods(n, silent) {
+function setPeriods(n) {
   CFG.periods = n;
-  S.total_periods = n;
-  document.querySelectorAll('#pg-periods .pill').forEach(b => {
-    b.classList.toggle('active', parseInt(b.textContent) === n || b.textContent.startsWith(n+''));
-  });
-  // match by first char of pill text
-  document.querySelectorAll('#pg-periods .pill').forEach(b => {
-    const num = b.textContent.startsWith('2') ? 2 : 4;
-    b.classList.toggle('active', num === n);
-  });
-  buildPeriodButtons();
-  updateFormatSummary();
-  sync();
-  if (!silent) { saveCfg(); schedulePush(); }
+  sendUpdate({ total_periods: n });
 }
-
-function setDuration(m, silent) {
+function setDuration(m) {
   CFG.duration = m;
-  S.duration_min = m;
-  document.querySelectorAll('#pg-duration .pill').forEach(b => {
-    b.classList.toggle('active', parseInt(b.textContent) === m);
-  });
-  updateFormatSummary();
-  sync();
-  if (!silent) { saveCfg(); schedulePush(); }
+  sendUpdate({ duration_min: m });
 }
 
-function updateFormatSummary() {
-  const p = CFG.periods, d = CFG.duration;
-  const el = document.getElementById('format-summary');
+function updateFormatSummary(p, d) {
+  const el    = document.getElementById('format-summary');
   const badge = document.getElementById('format-badge');
-  if (!p && !d) { el.innerHTML = 'Pick a format above'; return; }
-  const pname = p === 2 ? 'halves' : p === 4 ? 'quarters' : `periods`;
-  const total = (p && d) ? ` — <strong>${p * d} min</strong> total` : '';
-  el.innerHTML = p && d
-    ? `<strong>${p}</strong> ${pname} × <strong>${d} min</strong>${total}`
-    : p ? `<strong>${p}</strong> ${pname} — pick duration`
-        : `<strong>${d} min</strong> per period — pick number of periods`;
-  badge.textContent = p && d ? `${p} × ${d} min` : '—';
+  const pname = p === 2 ? 'halves' : p === 4 ? 'quarters' : 'periods';
+  const total = p && d ? ` — <strong>${p * d} min</strong> total` : '';
+  el.innerHTML = `<strong>${p}</strong> ${pname} × <strong>${d} min</strong>${total}`;
+  badge.textContent = `${p} × ${d} min`;
 }
 
-function buildPeriodButtons() {
+function buildPeriodButtons(activePeriod, total) {
   const row = document.getElementById('period-row');
-  const n = CFG.periods;
-  if (!n) return;
-
-  // Labels: 2 periods → H1 H2 | 4 periods → Q1 Q2 Q3 Q4
-  const labels = n === 2
-    ? ['H1','H2']
-    : ['Q1','Q2','Q3','Q4'];
-
+  if (!total) return;
+  const labels = total === 2 ? ['H1','H2'] : ['Q1','Q2','Q3','Q4'];
   row.innerHTML = '<span style="font-size:12px;color:var(--sub)">Period</span>';
   labels.forEach((lbl, i) => {
     const btn = document.createElement('button');
-    btn.className = 'ctrl-btn' + (S.period === i+1 ? ' active' : '');
+    btn.className = 'ctrl-btn' + (activePeriod === i+1 ? ' active' : '');
     btn.textContent = lbl;
-    btn.onclick = () => setPeriodActive(i+1);
+    btn.onclick = () => sendUpdate({ period: i+1 });
     row.appendChild(btn);
   });
 }
 
-function setPeriodActive(p) {
-  S.period = p;
-  buildPeriodButtons();
-  sync();
-  schedulePush();
-}
-
 // ── Score ─────────────────────────────────────────────────────────────────────
 function adj(team, delta) {
-  const key = team+'_score';
-  S[key] = Math.max(0, S[key]+delta);
-  const el = document.getElementById(team+'-score');
-  el.textContent = S[key];
+  const el  = document.getElementById(team + '-score');
+  const cur = parseInt(el.textContent) || 0;
+  const val = Math.max(0, cur + delta);
   el.classList.add('bump');
-  setTimeout(()=>el.classList.remove('bump'),140);
-  sync(); schedulePush();
+  setTimeout(() => el.classList.remove('bump'), 140);
+  sendUpdate({ [team + '_score']: val });
 }
 
 // ── Clock ─────────────────────────────────────────────────────────────────────
 function toggleClock() {
-  if (!CFG.periods || !CFG.duration) { alert('Set the match format first.'); return; }
-  S.match_live = !S.match_live;
-  const btn = document.getElementById('btn-start');
-  if (S.match_live) {
-    btn.textContent = '⏸ Pause'; btn.classList.add('active');
-    clockTimer = setInterval(() => {
-      S.second++;
-      if (S.second >= 60) { S.second=0; S.minute++; }
-      if (S.minute >= CFG.duration) {
-        S.minute=CFG.duration; S.second=0;
-        S.match_live=false; clearInterval(clockTimer);
-        btn.textContent='▶ Start'; btn.classList.remove('active');
-      }
-      sync(); doPush();
-    }, 1000);
-  } else {
-    btn.textContent='▶ Start'; btn.classList.remove('active');
-    clearInterval(clockTimer);
-  }
-  sync(); schedulePush();
+  const isLive = document.getElementById('btn-start').textContent.includes('Pause');
+  sendCmd(isLive ? 'stop' : 'start');
 }
-
 function resetClock() {
-  clearInterval(clockTimer);
-  S.match_live=false; S.minute=0; S.second=0;
-  document.getElementById('btn-start').textContent='▶ Start';
-  document.getElementById('btn-start').classList.remove('active');
-  document.getElementById('mm-in').value=0;
-  document.getElementById('ss-in').value=0;
-  sync(); schedulePush();
+  sendCmd('reset_clock');
+  document.getElementById('mm-in').value = 0;
+  document.getElementById('ss-in').value = 0;
 }
-
-function manualTime() {
-  S.minute = Math.min(CFG.duration||99, parseInt(document.getElementById('mm-in').value)||0);
-  S.second = Math.min(59, parseInt(document.getElementById('ss-in').value)||0);
-  sync(); schedulePush();
+function setTime() {
+  const m = Math.min(CFG.duration || 99, parseInt(document.getElementById('mm-in').value) || 0);
+  const s = Math.min(59, parseInt(document.getElementById('ss-in').value) || 0);
+  sendCmd('set_time', { minute: m, second: s });
 }
 
 // ── Reset all ─────────────────────────────────────────────────────────────────
 function resetAll() {
   if (!confirm('Reset match to 0–0, period 1, 00:00?')) return;
-  clearInterval(clockTimer);
-  Object.assign(S,{home_score:0,away_score:0,period:1,minute:0,second:0,match_live:false});
-  document.getElementById('home-score').textContent='0';
-  document.getElementById('away-score').textContent='0';
-  document.getElementById('btn-start').textContent='▶ Start';
-  document.getElementById('btn-start').classList.remove('active');
-  document.getElementById('mm-in').value=0;
-  document.getElementById('ss-in').value=0;
-  buildPeriodButtons();
-  sync(); schedulePush();
+  sendCmd('reset_match');
+  document.getElementById('mm-in').value = 0;
+  document.getElementById('ss-in').value = 0;
 }
 
-// ── Sync UI + preview ─────────────────────────────────────────────────────────
-function periodLabel(p) {
-  if (CFG.periods === 2) return p===1?'H1':'H2';
-  if (CFG.periods === 4) return 'Q'+p;
-  return 'P'+p;
-}
+// ── Preview ───────────────────────────────────────────────────────────────────
+function updatePreview(s) {
+  document.getElementById('pv-home-name').textContent  = s.home_name.toUpperCase().slice(0,12);
+  document.getElementById('pv-away-name').textContent  = s.away_name.toUpperCase().slice(0,12);
+  document.getElementById('pv-home-score').textContent = s.home_score;
+  document.getElementById('pv-away-score').textContent = s.away_score;
+  document.getElementById('pv-plabel').textContent     = periodLabel(s.period, s.total_periods);
+  document.getElementById('pv-clock').textContent      = pad(s.minute) + ':' + pad(s.second);
+  const rem = Math.max(0, s.duration_min * 60 - (s.minute * 60 + s.second));
+  const rm  = Math.floor(rem/60), rs = rem % 60;
+  document.getElementById('pv-remain').textContent = rem === 0 ? 'Full time!' : rm > 0 ? rm + 'm left' : rs + 's left';
+  document.getElementById('pv-live').style.display   = s.match_live ? '' : 'none';
+  document.getElementById('pv-paused').style.display = s.match_live ? 'none' : '';
+  const pfull = periodFullName(s.period, s.total_periods);
+  document.getElementById('pv-pname').textContent = pfull;
 
-function periodFullName(p) {
-  if (CFG.periods === 2) return p===1?'1st Half':'2nd Half';
-  if (CFG.periods === 4) return 'Quarter '+p;
-  return 'Period '+p;
-}
-
-function pad(n) { return String(n).padStart(2,'0'); }
-
-function sync() {
-  S.home_name = document.getElementById('home-name').value || 'Home';
-  S.away_name = document.getElementById('away-name').value || 'Away';
-
-  const dur   = CFG.duration || 20;
-  const plbl  = CFG.periods  ? periodLabel(S.period) : '—';
-  const pfull = CFG.periods  ? periodFullName(S.period) : '—';
-  const clock = pad(S.minute)+':'+pad(S.second);
-  const remSec = Math.max(0, dur*60 - (S.minute*60+S.second));
-  const rm = Math.floor(remSec/60), rs = remSec%60;
-  const remTxt = remSec===0 ? 'Full time!' : rm>0 ? rm+'m left' : rs+'s left';
-
-  // Big controller display
-  document.getElementById('p-label-big').textContent = plbl;
-  document.getElementById('clock-big').textContent   = clock;
-  document.getElementById('remain-big').textContent  = remTxt;
-
-  // Preview
-  document.getElementById('pv-home-name').textContent  = S.home_name.toUpperCase().slice(0,12);
-  document.getElementById('pv-away-name').textContent  = S.away_name.toUpperCase().slice(0,12);
-  document.getElementById('pv-home-score').textContent = S.home_score;
-  document.getElementById('pv-away-score').textContent = S.away_score;
-  document.getElementById('pv-plabel').textContent     = plbl;
-  document.getElementById('pv-clock').textContent      = clock;
-  document.getElementById('pv-remain').textContent     = remTxt;
-  document.getElementById('pv-live').style.display     = S.match_live ? '' : 'none';
-  document.getElementById('pv-paused').style.display   = S.match_live ? 'none' : '';
-  document.getElementById('pv-pname').textContent      = pfull;
-
-  // Dots
-  const n = CFG.periods || 2;
   const dots = document.getElementById('pv-dots');
   dots.innerHTML = '';
-  for (let i=1;i<=n;i++) {
+  for (let i = 1; i <= s.total_periods; i++) {
     const d = document.createElement('div');
-    d.className='pv-dot'+(i<=S.period?' on':'');
+    d.className = 'pv-dot' + (i <= s.period ? ' on' : '');
     dots.appendChild(d);
   }
 }
 
-// ── Push ──────────────────────────────────────────────────────────────────────
-function schedulePush() { clearTimeout(pushTimer); pushTimer=setTimeout(doPush,300); }
-
-async function doPush() {
-  const ip     = document.getElementById('pi-ip').value.trim();
-  const nodeId = document.getElementById('node-id').value.trim();
-  saveCfg();
-  if (!ip||!nodeId) return;
-  const url = `http://${ip}:4444/api/1/data/${nodeId}`;
-  try {
-    const r = await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(S),signal:AbortSignal.timeout(3000)});
-    if (r.ok) {
-      setConn(true);
-      addLog(`✓  ${S.home_name} ${S.home_score}–${S.away_score} ${S.away_name}  ${periodLabel(S.period)} ${pad(S.minute)}:${pad(S.second)}`,'ok');
-    } else { setConn(false); addLog(`✗  HTTP ${r.status}`,'err'); }
-  } catch(e) { setConn(false); addLog(`✗  ${e.message}`,'err'); }
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function pad(n) { return String(n).padStart(2, '0'); }
+function periodLabel(p, t) {
+  if (t === 2) return p === 1 ? 'H1' : 'H2';
+  if (t === 4) return 'Q' + p;
+  return 'P' + p;
+}
+function periodFullName(p, t) {
+  if (t === 2) return p === 1 ? '1st Half' : '2nd Half';
+  if (t === 4) return 'Quarter ' + p;
+  return 'Period ' + p;
 }
 
-function testConn() { addLog('Testing…',''); doPush(); }
 function setConn(ok) {
-  document.getElementById('conn-dot').className='dot '+(ok?'ok':'err');
-  document.getElementById('conn-label').textContent=ok?'Connected':'No response';
+  document.getElementById('conn-dot').className   = 'dot ' + (ok ? 'ok' : 'err');
+  document.getElementById('conn-label').textContent = ok ? 'Connected' : 'Reconnecting…';
 }
-function addLog(msg,cls) {
-  const c=document.getElementById('log');
-  const e=document.createElement('div');
-  e.className='log-entry '+(cls||'');
-  e.textContent=new Date().toLocaleTimeString()+'  '+msg;
+function addLog(msg, cls) {
+  const c = document.getElementById('log');
+  const e = document.createElement('div');
+  e.className = 'log-entry ' + (cls || '');
+  e.textContent = new Date().toLocaleTimeString() + '  ' + msg;
   c.prepend(e);
-  while(c.children.length>40) c.removeChild(c.lastChild);
+  while (c.children.length > 40) c.removeChild(c.lastChild);
 }
 </script>
 </body>

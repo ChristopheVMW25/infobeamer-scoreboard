@@ -1,6 +1,14 @@
 {
-    "name": "Scorebord",
-    "version": "1.0",
-    "author": "Christophe Vervliet",
-    "desc": "Live scorebord voor LED wall"
+  "name": "scorebord",
+  "version": "2.0.0",
+  "description": "Live scoreboard for LED wall — Node.js + WebSocket",
+  "author": "Christophe Vervliet",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "ws": "^8.16.0"
+  }
 }

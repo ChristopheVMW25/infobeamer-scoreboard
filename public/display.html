@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Scoreboard Display</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;900&display=swap');
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  background: #000;
+  width: 100vw; height: 100vh;
+  overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* Fixed 512×128 canvas, scaled by JS to fill screen */
+#board {
+  position: absolute;
+  width: 512px; height: 128px;
+  display: grid;
+  grid-template-columns: 206px 100px 206px;
+  grid-template-rows: 111px 17px;
+  transform-origin: top left;
+  font-family: 'Barlow Condensed', sans-serif;
+}
+
+/* ── Panels ── */
+.pv-home   { background: rgb(10,20,71);  display:flex; flex-direction:column; justify-content:center; align-items:flex-end;   padding:0 6px; }
+.pv-centre { background: rgb(18,18,23);  display:flex; flex-direction:column; align-items:center; justify-content:flex-start; padding:3px 0 0; gap:1px; }
+.pv-away   { background: rgb(66,10,10);  display:flex; flex-direction:column; justify-content:center; align-items:flex-start;  padding:0 6px; }
+.pv-bar    { grid-column:1/4; background:rgb(10,10,15); display:flex; align-items:center; justify-content:space-between; padding:0 8px; }
+
+/* ── Team names ── */
+.team-name {
+  font-size:13px; font-weight:600; color:#666677;
+  text-transform:uppercase; letter-spacing:.5px;
+  white-space:nowrap; overflow:hidden; max-width:198px;
+  margin-bottom:1px;
+}
+
+/* ── Scores ── */
+.score {
+  font-size:72px; font-weight:900; color:#fff; line-height:1;
+}
+
+/* ── Centre info ── */
+.p-label  { font-size:13px; font-weight:700; color:#f5c518; line-height:1.1; }
+.status   { font-size:10px; font-weight:600; line-height:1.2; }
+.status.live   { color:#26e159; }
+.status.paused { color:#666677; }
+.clock    { font-size:16px; font-weight:700; color:#fff; letter-spacing:1px; line-height:1.2; }
+.remain   { font-size:9px; color:#666677; line-height:1.2; }
+
+/* ── Status bar ── */
+.dots { display:flex; gap:4px; align-items:center; }
+.dot  { width:8px; height:8px; border-radius:1px; }
+.dot.on  { background:#f5c518; }
+.dot.off { background:#383840; }
+.period-long { font-size:11px; color:#666677; }
+
+/* ── No-signal overlay ── */
+#no-signal {
+  position:fixed; bottom:4px; left:50%; transform:translateX(-50%);
+  background:rgba(200,40,40,.85); color:#fff;
+  padding:2px 10px; border-radius:3px;
+  font-family:sans-serif; font-size:10px; letter-spacing:.5px;
+  display:none;
+}
+</style>
+</head>
+<body>
+
+<div id="board">
+  <div class="pv-home">
+    <div class="team-name" id="home-name">HOME</div>
+    <div class="score"     id="home-score">0</div>
+  </div>
+  <div class="pv-centre">
+    <div class="p-label" id="p-label">H1</div>
+    <div class="status paused" id="status">PAUSED</div>
+    <div class="clock"   id="clock">00:00</div>
+    <div class="remain"  id="remain">20m left</div>
+  </div>
+  <div class="pv-away">
+    <div class="team-name" id="away-name">AWAY</div>
+    <div class="score"     id="away-score">0</div>
+  </div>
+  <div class="pv-bar">
+    <div class="dots" id="dots"></div>
+    <div class="period-long" id="period-long">1st Half</div>
+  </div>
+</div>
+
+<div id="no-signal">NO SIGNAL</div>
+
+<script>
+// ── Scale board to fill screen ────────────────────────────────────────────────
+const board = document.getElementById('board');
+
+function resize() {
+  const sx = window.innerWidth  / 512;
+  const sy = window.innerHeight / 128;
+  board.style.transform = `scale(${sx},${sy})`;
+  board.style.left = '0px';
+  board.style.top  = '0px';
+}
+window.addEventListener('resize', resize);
+resize();
+
+// ── WebSocket ─────────────────────────────────────────────────────────────────
+const wsProto  = location.protocol === 'https:' ? 'wss' : 'ws';
+const wsUrl    = `${wsProto}://${location.host}`;
+let   ws, lastUpdate = 0, reconnectTimer;
+
+function connect() {
+  ws = new WebSocket(wsUrl);
+  ws.onopen    = () => clearTimeout(reconnectTimer);
+  ws.onmessage = ({ data }) => {
+    try {
+      const msg = JSON.parse(data);
+      if (msg.type === 'state') { lastUpdate = Date.now(); render(msg.data); }
+    } catch {}
+  };
+  ws.onclose = () => { reconnectTimer = setTimeout(connect, 2000); };
+  ws.onerror  = () => ws.close();
+}
+connect();
+
+setInterval(() => {
+  const stale = lastUpdate > 0 && (Date.now() - lastUpdate) > 15000;
+  document.getElementById('no-signal').style.display = stale ? 'block' : 'none';
+}, 1000);
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+const pad = n => String(n).padStart(2, '0');
+
+function periodShort(p, t) {
+  if (t === 2) return p === 1 ? 'H1' : 'H2';
+  if (t === 4) return 'Q' + p;
+  return 'P' + p;
+}
+function periodLong(p, t) {
+  if (t === 2) return p === 1 ? '1st Half' : '2nd Half';
+  if (t === 4) return 'Quarter ' + p;
+  return 'Period ' + p;
+}
+
+// ── Render ────────────────────────────────────────────────────────────────────
+function render(s) {
+  document.getElementById('home-name').textContent  = s.home_name.toUpperCase().slice(0, 14);
+  document.getElementById('away-name').textContent  = s.away_name.toUpperCase().slice(0, 14);
+  document.getElementById('home-score').textContent = s.home_score;
+  document.getElementById('away-score').textContent = s.away_score;
+
+  document.getElementById('p-label').textContent = periodShort(s.period, s.total_periods);
+
+  const statusEl = document.getElementById('status');
+  statusEl.textContent = s.match_live ? 'LIVE' : 'PAUSED';
+  statusEl.className   = 'status ' + (s.match_live ? 'live' : 'paused');
+
+  document.getElementById('clock').textContent = pad(s.minute) + ':' + pad(s.second);
+
+  const rem = Math.max(0, s.duration_min * 60 - (s.minute * 60 + s.second));
+  const rm  = Math.floor(rem / 60), rs = rem % 60;
+  document.getElementById('remain').textContent =
+    rem === 0 ? 'Time!' : rm > 0 ? rm + 'm left' : rs + 's left';
+
+  const dots = document.getElementById('dots');
+  dots.innerHTML = '';
+  for (let i = 1; i <= s.total_periods; i++) {
+    const d = document.createElement('div');
+    d.className = 'dot ' + (i <= s.period ? 'on' : 'off');
+    dots.appendChild(d);
+  }
+
+  let plong = periodLong(s.period, s.total_periods);
+  if (!s.match_live && s.minute === 0 && s.second === 0 && s.period > 1) plong = 'Break';
+  document.getElementById('period-long').textContent = plong;
+}
+</script>
+</body>
+</html>

@@ -1,40 +1,132 @@
-# Scorebord — info-beamer Live Scoreboard
+# Scorebord — Live LED Wall Scoreboard
 
-Live soccer/sports scoreboard for a 512×128 LED wall, driven by a Raspberry Pi 4 running [info-beamer](https://info-beamer.com/).
+Real-time sports scoreboard for a 512×128 LED wall.
+Control from **any device** (phone, tablet, laptop) via `https://scorebord.nextphase.be`.
 
 ```
-[ Laptop ]──WiFi──[ Pi4 "Scoreboard" hotspot ]──HDMI──[ LED wall ]
-              10.0.0.x        10.0.0.1
+[ Any phone / tablet / laptop ]
+         anywhere
+              │  wss:// (Cloudflare Tunnel)
+              ▼
+    [ Raspberry Pi — Node.js server :3000 ]
+      Express + WebSocket + server-side clock
+              │
+         ws://localhost
+              ▼
+    [ Chromium kiosk ]──HDMI──[ LED Wall ]
+       display.html
 ```
+
+---
 
 ## Files
 
 | File | Purpose |
 |---|---|
-| `node.lua` | info-beamer display script (runs on Pi, 512×128 px) |
-| `package.json` | info-beamer package descriptor |
-| `controller.html` | Web controller — open on laptop to control the scoreboard |
-| `setup_hotspot.sh` | One-time Pi WiFi hotspot setup script |
-| `README_hotspot.md` | Hotspot setup & usage guide |
+| `server.js` | Node.js server — WebSocket, match state, server-side clock |
+| `package.json` | Node.js dependencies |
+| `public/controller.html` | Operator UI — open on any device |
+| `public/display.html` | LED wall display — runs in Chromium kiosk on Pi |
+| `setup.sh` | One-time Pi setup script |
 
-## Quick start
+---
 
-1. Run `setup_hotspot.sh` once on the Pi (see `README_hotspot.md`)
-2. On match day: connect laptop WiFi to **Scoreboard** (password: `kickoff2025`)
-3. Open `controller.html` in your browser
-4. Enter Pi IP `10.0.0.1` and your info-beamer Node ID → click **Test**
-5. Set team names, match format, and go
+## Pi setup (one time)
 
-## Display layout
+### 1. Flash Raspberry Pi OS
+Flash **Raspberry Pi OS with Desktop** (64-bit) to the SD card using [Raspberry Pi Imager](https://www.raspberrypi.com/software/).
+In Imager settings, pre-configure:
+- Username: `pi`
+- WiFi credentials for the club network
+- Enable SSH
 
-```
-┌──────────────────────────────────────────────────────────────────┐
-│  HOME NAME          H1 / LIVE          AWAY NAME                 │
-│                     00:00                                        │
-│       0          20m left          0                             │
-├──────────────────────────────────────────────────────────────────┤
-│  ● ●                                        1st Half             │
-└──────────────────────────────────────────────────────────────────┘
+### 2. Copy files to Pi
+```bash
+# On your laptop (SSH must be enabled):
+scp -r . pi@<pi-ip>:~/scorebord
 ```
 
-Supports 2 halves or 4 quarters, configurable period duration.
+Or clone from GitHub:
+```bash
+ssh pi@<pi-ip>
+git clone https://github.com/vervlietchristophe-bot/infobeamer-scoreboard.git scorebord
+```
+
+### 3. Run setup
+```bash
+ssh pi@<pi-ip>
+sudo bash ~/scorebord/setup.sh
+```
+
+The Pi will reboot automatically. After reboot:
+- The Node.js server starts automatically
+- Chromium opens in kiosk mode showing the scoreboard display
+
+---
+
+## Cloudflare Tunnel setup (one time)
+
+This gives you `https://scorebord.nextphase.be` accessible from anywhere.
+
+### Step 1 — Add nextphase.be to Cloudflare
+1. Create a free account at [cloudflare.com](https://cloudflare.com)
+2. Click **Add a site** → enter `nextphase.be`
+3. Choose the **Free** plan
+4. Cloudflare will show you two nameservers (e.g. `ns1.cloudflare.com`)
+5. In **GoDaddy**: go to DNS → Nameservers → change to Cloudflare's nameservers
+6. Wait ~10 minutes for propagation
+
+### Step 2 — Create the tunnel on the Pi
+```bash
+ssh pi@<pi-ip>
+
+# Login (outputs a URL — open it on your laptop to authorize)
+cloudflared tunnel login
+
+# Create tunnel
+cloudflared tunnel create scoreboard
+
+# Route the subdomain
+cloudflared tunnel route dns scoreboard scorebord.nextphase.be
+
+# Install as a system service (auto-starts on boot)
+sudo cloudflared service install
+sudo systemctl start cloudflared
+```
+
+### Step 3 — Done
+Visit **https://scorebord.nextphase.be** from any device.
+
+---
+
+## Match day usage
+
+| Who | Device | URL |
+|---|---|---|
+| Scorekeeper | Laptop / tablet | `https://scorebord.nextphase.be` |
+| Referee | Phone | `https://scorebord.nextphase.be` |
+| Display | Pi (auto) | `http://localhost:3000/display` |
+
+1. Open the controller URL on your device
+2. Set match format (2 halves or 4 quarters + duration)
+3. Enter team names
+4. Press **▶ Start** — clock runs on the server, all devices stay in sync
+5. Use **+/−** buttons for goals
+
+---
+
+## Security (optional)
+
+To password-protect the controller, enable **Cloudflare Access** (free):
+1. In Cloudflare dashboard → Zero Trust → Access → Applications
+2. Add application → `scorebord.nextphase.be`
+3. Set an email-based or PIN-based policy
+4. Only authorized users can access the controller
+
+---
+
+## Local access (same WiFi, no internet)
+If the tunnel is down, the controller still works on the club's local network:
+```
+http://<pi-ip>:3000
+```
