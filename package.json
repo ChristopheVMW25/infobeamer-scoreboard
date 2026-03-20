@@ -1,5 +1,6 @@
 {
     "name": "Scorebord",
     "version": "1.0",
+    "author": "Christophe Vervliet",
     "description": "Simpel scorebord voor LED wall"
 }
