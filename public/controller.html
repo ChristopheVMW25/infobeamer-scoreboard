@@ -469,7 +469,7 @@ function handleState(s) {
   document.getElementById('clock-big').textContent = clock;
   const rem = Math.max(0, s.duration_min * 60 - (s.minute * 60 + s.second));
   const rm = Math.floor(rem / 60), rs = rem % 60;
-  const remTxt = rem === 0 ? 'Full time!' : rm > 0 ? rm + 'm left' : rs + 's left';
+  const remTxt = rem === 0 ? 'Full time!' : rm > 0 ? rm + ' min left' : rs + 's left';
   document.getElementById('remain-big').textContent = remTxt;
 
   // Start button
@@ -671,7 +671,7 @@ function updatePreview(s) {
   document.getElementById('pv-clock').textContent      = pad(s.minute) + ':' + pad(s.second);
   const rem = Math.max(0, s.duration_min * 60 - (s.minute * 60 + s.second));
   const rm  = Math.floor(rem/60), rs = rem % 60;
-  document.getElementById('pv-remain').textContent = rem === 0 ? 'Full time!' : rm > 0 ? rm + 'm left' : rs + 's left';
+  document.getElementById('pv-remain').textContent = rem === 0 ? 'Full time!' : rm > 0 ? rm + ' min left' : rs + 's left';
   document.getElementById('pv-live').style.display   = s.match_live ? '' : 'none';
   document.getElementById('pv-paused').style.display = s.match_live ? 'none' : '';
   const pfull = periodFullName(s.period, s.total_periods);

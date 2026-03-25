@@ -223,7 +223,7 @@ function render(s) {
   const rem = Math.max(0, s.duration_min * 60 - (s.minute * 60 + s.second));
   const rm  = Math.floor(rem / 60), rs = rem % 60;
   document.getElementById('remain').textContent =
-    rem === 0 ? 'Time!' : rm > 0 ? rm + 'm left' : rs + 's left';
+    rem === 0 ? 'Time!' : rm > 0 ? rm + ' min left' : rs + 's left';
 
   const dots = document.getElementById('dots');
   dots.innerHTML = '';
