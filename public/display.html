@@ -117,16 +117,52 @@ body {
 
 <script>
 // ── Scale board to fill screen ────────────────────────────────────────────────
-const board = document.getElementById('board');
+// The board is a fixed 512×128 canvas. The LED wall controller squashes
+// whatever HDMI signal it receives down to 512×128, so we stretch-fill by
+// default. On rotated displays (Windows set to portrait), we rotate the
+// board 90° so it still fills the screen correctly. A ?fit=contain query
+// param switches to aspect-preserving (letterbox) mode for test monitors.
+const board    = document.getElementById('board');
+const fitMode  = new URLSearchParams(location.search).get('fit') || 'stretch';
 
 function resize() {
-  const sx = window.innerWidth  / 512;
-  const sy = window.innerHeight / 128;
-  board.style.transform = `scale(${sx},${sy})`;
+  const vw = window.innerWidth, vh = window.innerHeight;
+  const portrait = vh > vw;
+  // In portrait we rotate the board 90° so its long side runs along the
+  // screen's long side. That means 512 maps to vh, 128 maps to vw.
+  const longSide  = portrait ? vh : vw;
+  const shortSide = portrait ? vw : vh;
+
+  let sx, sy;
+  if (fitMode === 'contain') {
+    const s = Math.min(longSide / 512, shortSide / 128);
+    sx = sy = s;
+  } else {
+    sx = longSide  / 512;
+    sy = shortSide / 128;
+  }
+
+  if (portrait) {
+    // Rotate 90° clockwise around origin, then translate into view.
+    // After rotate+scale, the board occupies (sy*128) wide × (sx*512) tall.
+    const w = sy * 128, h = sx * 512;
+    const tx = (vw + w) / 2;
+    const ty = (vh - h) / 2;
+    board.style.transform = `translate(${tx}px, ${ty}px) rotate(90deg) scale(${sx}, ${sy})`;
+  } else {
+    const w = sx * 512, h = sy * 128;
+    const tx = (vw - w) / 2;
+    const ty = (vh - h) / 2;
+    board.style.transform = `translate(${tx}px, ${ty}px) scale(${sx}, ${sy})`;
+  }
   board.style.left = '0px';
   board.style.top  = '0px';
 }
 window.addEventListener('resize', resize);
+window.addEventListener('orientationchange', resize);
+if (screen.orientation && screen.orientation.addEventListener) {
+  screen.orientation.addEventListener('change', resize);
+}
 resize();
 
 // ── WebSocket ─────────────────────────────────────────────────────────────────
