@@ -1,6 +1,7 @@
 const express    = require('express');
 const { WebSocketServer } = require('ws');
 const http       = require('http');
+const os         = require('os');
 const path       = require('path');
 const fs         = require('fs');
 
@@ -195,7 +196,30 @@ app.delete('/api/sessions/:id', (req, res) => {
   res.json({ ok: true });
 });
 
+function lanAddresses() {
+  const out = [];
+  for (const list of Object.values(os.networkInterfaces())) {
+    for (const iface of list || []) {
+      if (iface.family === 'IPv4' && !iface.internal) out.push(iface.address);
+    }
+  }
+  return out;
+}
+
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, '0.0.0.0', () =>
-  console.log(`Scoreboard server running on http://0.0.0.0:${PORT}`)
-);
+server.listen(PORT, '0.0.0.0', () => {
+  const ips = lanAddresses();
+  console.log('');
+  console.log('==========================================================');
+  console.log('  Scoreboard server ready');
+  console.log('----------------------------------------------------------');
+  console.log(`  Display (open on HDMI)    : http://localhost:${PORT}/display.html`);
+  console.log(`  Controller (this laptop)  : http://localhost:${PORT}/controller.html`);
+  if (ips.length) {
+    console.log('');
+    console.log('  Controller from phone / tablet (same Wi-Fi):');
+    for (const ip of ips) console.log(`    http://${ip}:${PORT}/controller.html`);
+  }
+  console.log('==========================================================');
+  console.log('');
+});
