@@ -73,9 +73,29 @@ html, body {
   font-family:sans-serif; font-size:2vmin; letter-spacing:.1vmin;
   display:none;
 }
+
+/* ── Calibration overlay (?cal=1) ── */
+#cal {
+  position:fixed; inset:0;
+  display:none;
+  grid-template-columns: repeat(8, 1fr);
+  grid-template-rows: repeat(4, 1fr);
+  font-family:'Barlow Condensed', sans-serif;
+  font-weight:900;
+  z-index:9999;
+}
+#cal.show { display:grid; }
+#cal .c {
+  display:flex; align-items:center; justify-content:center;
+  color:#fff; text-shadow:0 0 4px #000, 0 0 8px #000;
+  font-size:8vmin;
+  border:1px solid rgba(0,0,0,.35);
+}
 </style>
 </head>
 <body>
+
+<div id="cal"></div>
 
 <div id="board">
   <div class="pv-home">
@@ -107,12 +127,56 @@ html, body {
 <div id="no-signal">NO SIGNAL</div>
 
 <script>
+// ── Calibration grid (?cal=1) ────────────────────────────────────────────────
+(function buildCalibration() {
+  if (new URLSearchParams(location.search).get('cal') !== '1') return;
+  const cal = document.getElementById('cal');
+  cal.classList.add('show');
+  const cols = 'ABCDEFGH';
+  const colors = [
+    '#ef4444','#f97316','#eab308','#22c55e','#06b6d4','#3b82f6','#a855f7','#ec4899',
+    '#dc2626','#ea580c','#ca8a04','#16a34a','#0891b2','#2563eb','#9333ea','#db2777',
+    '#b91c1c','#c2410c','#a16207','#15803d','#0e7490','#1d4ed8','#7e22ce','#be185d',
+    '#991b1b','#9a3412','#854d0e','#166534','#155e75','#1e40af','#6b21a8','#9d174d',
+  ];
+  let i = 0;
+  for (let r = 1; r <= 4; r++) {
+    for (let c = 0; c < 8; c++) {
+      const cell = document.createElement('div');
+      cell.className = 'c';
+      cell.textContent = cols[c] + r;
+      cell.style.background = colors[i++];
+      cal.appendChild(cell);
+    }
+  }
+})();
+
+// ── Auto-rotate to keep the layout landscape on portrait screens ─────────────
+function applyAutoRotate() {
+  const p = new URLSearchParams(location.search);
+  if (parseInt(p.get('w')) && parseInt(p.get('h'))) return;
+  const b = document.getElementById('board');
+  const portrait = window.innerHeight > window.innerWidth;
+  if (portrait) {
+    b.style.width  = '100vh';
+    b.style.height = '100vw';
+    b.style.transformOrigin = 'top left';
+    b.style.transform = `translate(${window.innerWidth}px, 0) rotate(90deg)`;
+    b.style.top = '0';
+    b.style.left = '0';
+  } else {
+    b.style.width  = '100vw';
+    b.style.height = '100vh';
+    b.style.transform = '';
+    b.style.top = '0';
+    b.style.left = '0';
+  }
+}
+applyAutoRotate();
+window.addEventListener('resize', applyAutoRotate);
+window.addEventListener('orientationchange', applyAutoRotate);
+
 // ── LED-mode positioning ─────────────────────────────────────────────────────
-// Default: board fills the whole page (fluid).
-// LED mode: pass ?w=350&h=75&pos=tr to render at exact pixels in a corner.
-//   pos values: tl (top-left, default), tr (top-right), bl, br, c (center)
-// Optional ?rot=90|180|270 rotates the board (useful when the LED is
-// physically mounted rotated).
 (function applyLedMode() {
   const p = new URLSearchParams(location.search);
   const w = parseInt(p.get('w'));
