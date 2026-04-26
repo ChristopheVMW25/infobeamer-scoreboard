@@ -3,3 +3,7 @@ node_modules/
 *.log
 data/
 PI_CREDENTIALS.md
+.claude/
+GITHUB sync token.txt
+infobeamer-scoreboard-main/
+.chrome-kiosk/
