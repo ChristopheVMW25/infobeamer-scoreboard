@@ -31,7 +31,7 @@ html, body {
 .pv-bar    { grid-column:1/4; background:rgb(10,10,15); display:flex; align-items:center; justify-content:space-between; padding:0 1.8cqmin; }
 
 .team-name {
-  font-size:6cqmin; font-weight:600; color:#666677;
+  font-size:12cqmin; font-weight:600; color:#666677;
   text-transform:uppercase; letter-spacing:.2cqmin;
   white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
   max-width:95%;
@@ -40,29 +40,29 @@ html, body {
 
 .score { font-size:48cqmin; font-weight:900; color:#fff; line-height:1; }
 
-.p-label  { font-size:7cqmin; font-weight:700; color:#f5c518; line-height:1.1; }
-.status   { font-size:5cqmin; font-weight:600; line-height:1.2; }
+.p-label  { font-size:14cqmin; font-weight:700; color:#f5c518; line-height:1.1; }
+.status   { font-size:10cqmin; font-weight:600; line-height:1.2; }
 .status.live   { color:#26e159; }
 .status.paused { color:#666677; }
-.clock    { font-size:10cqmin; font-weight:700; color:#fff; letter-spacing:.3cqmin; line-height:1.2; }
-.remain   { font-size:4cqmin; color:#666677; line-height:1.2; }
+.clock    { font-size:20cqmin; font-weight:700; color:#fff; letter-spacing:.3cqmin; line-height:1.2; }
+.remain   { font-size:8cqmin; color:#666677; line-height:1.2; }
 
 .dots { display:flex; gap:.8cqmin; align-items:center; }
-.dot  { width:1.6cqmin; height:1.6cqmin; border-radius:.25cqmin; }
+.dot  { width:3cqmin; height:3cqmin; border-radius:.25cqmin; }
 .dot.on  { background:#f5c518; }
 .dot.off { background:#383840; }
-.period-long { font-size:5cqmin; color:#666677; }
+.period-long { font-size:10cqmin; color:#666677; }
 
 #notif {
   position:absolute; left:0; right:0;
-  bottom:13%; height:6cqmin;
+  bottom:13%; height:12cqmin;
   display:flex; align-items:center; justify-content:center; gap:1.5cqmin;
   background:rgba(0,0,0,.82);
-  font-size:5cqmin; font-weight:700; letter-spacing:.1cqmin;
+  font-size:10cqmin; font-weight:700; letter-spacing:.1cqmin;
   opacity:0; transition:opacity .4s;
   pointer-events:none;
 }
-#notif .n-badge { width:2.8cqmin; height:2.8cqmin; border-radius:.4cqmin; flex-shrink:0; }
+#notif .n-badge { width:5cqmin; height:5cqmin; border-radius:.4cqmin; flex-shrink:0; }
 #notif .n-player { color:#fff; }
 #notif .n-min { color:#888; font-weight:400; }
 
