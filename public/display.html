@@ -154,7 +154,7 @@ html, body {
 // ── Auto-rotate to keep the layout landscape on portrait screens ─────────────
 function applyAutoRotate() {
   const p = new URLSearchParams(location.search);
-  if (parseInt(p.get('w')) && parseInt(p.get('h'))) return;
+  if ((p.get('fit') || '').toLowerCase() !== 'stretch') return;
   const b = document.getElementById('board');
   const portrait = window.innerHeight > window.innerWidth;
   if (portrait) {
@@ -177,13 +177,16 @@ window.addEventListener('resize', applyAutoRotate);
 window.addEventListener('orientationchange', applyAutoRotate);
 
 // ── LED-mode positioning ─────────────────────────────────────────────────────
+// Default: render at native 350×75 in the top-left so the LED controller's
+// pixel-for-pixel crop of the HDMI input picks up the whole scoreboard.
+// Use ?fit=stretch to preview the full layout on a regular monitor.
 (function applyLedMode() {
   const p = new URLSearchParams(location.search);
-  const w = parseInt(p.get('w'));
-  const h = parseInt(p.get('h'));
+  if ((p.get('fit') || '').toLowerCase() === 'stretch') return;
+  const w = parseInt(p.get('w')) || 350;
+  const h = parseInt(p.get('h')) || 75;
   const pos = (p.get('pos') || 'tl').toLowerCase();
   const rot = (parseInt(p.get('rot')) || 0) % 360;
-  if (!w || !h) return;
 
   const b = document.getElementById('board');
   b.style.width  = w + 'px';
