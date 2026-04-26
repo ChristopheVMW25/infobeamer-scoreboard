@@ -1,6 +1,6 @@
 # Scorebord — Live LED Wall Scoreboard
 
-Real-time sports scoreboard for a 512×128 LED wall.
+Real-time sports scoreboard for a 350×75 LED wall (4 panels: 100|75|75|100 wide × 75 tall).
 Control from **any device** (phone, tablet, laptop) via `https://scorebord.nextphase.be`.
 
 ```
