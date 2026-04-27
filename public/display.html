@@ -31,14 +31,14 @@ html, body {
 .pv-bar    { grid-column:1/4; background:rgb(10,10,15); display:flex; align-items:center; justify-content:space-between; padding:0 1.8cqmin; }
 
 .team-name {
-  font-size:20cqmin; font-weight:600; color:#ffffff;
+  font-size:calc(var(--team-scale, 1) * 20cqmin); font-weight:600; color:#ffffff;
   text-transform:uppercase; letter-spacing:.2cqmin;
   white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
   max-width:95%;
   line-height:1; margin-bottom:.6cqmin;
 }
 
-.score { font-size:48cqmin; font-weight:900; color:#fff; line-height:1; }
+.score { font-size:calc(var(--team-scale, 1) * 48cqmin); font-weight:900; color:#fff; line-height:1; }
 
 .p-label  { font-size:14cqmin; font-weight:700; color:#ffd64a; line-height:1.1; }
 .status   { font-size:10cqmin; font-weight:600; line-height:1.2; }
@@ -349,6 +349,7 @@ function render(s) {
   }
 
   document.body.style.fontFamily = s.text_font || "'Barlow Condensed', sans-serif";
+  document.documentElement.style.setProperty('--team-scale', String(s.team_text_scale || 1));
 
   if (s.home_color) {
     document.querySelector('.pv-home').style.background = s.home_color;

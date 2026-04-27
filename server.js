@@ -57,6 +57,7 @@ let state = {
   home_text_color:  null,
   away_text_color:  null,
   text_font:        null,
+  team_text_scale:  1,
   period:           1,
   total_periods:    2,
   duration_min:     20,

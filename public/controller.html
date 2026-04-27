@@ -294,6 +294,13 @@ header h1 { font-family:'Barlow Condensed',sans-serif; font-weight:900; font-siz
       <option value="'Trebuchet MS', sans-serif">Trebuchet MS</option>
       <option value="'Courier New', monospace">Courier</option>
     </select>
+    <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--sub)" title="Team name and score size">
+      Size
+      <input type="number" id="team-size" min="50" max="200" step="5" value="100"
+             onchange="setTeamSize(this.value)"
+             style="width:60px;background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:4px 6px;font-size:12px">
+      %
+    </label>
     <div style="display:flex;gap:4px">
       <button class="pill active" id="btn-nl" onclick="setLang('nl')" style="padding:4px 10px;font-size:12px">NL</button>
       <button class="pill"        id="btn-en" onclick="setLang('en')" style="padding:4px 10px;font-size:12px">EN</button>
@@ -615,6 +622,8 @@ function handleState(s) {
   // Font
   const fs = document.getElementById('font-select');
   if (fs && fs.value !== (s.text_font || '')) fs.value = s.text_font || '';
+  const sz = document.getElementById('team-size');
+  if (sz && document.activeElement !== sz) sz.value = Math.round((s.team_text_scale || 1) * 100);
 
   // Commercials
   const adAuto = document.getElementById('ad-auto');
@@ -726,6 +735,11 @@ function clearTeamTextColor(team) {
 
 function setFont(value) {
   sendUpdate({ text_font: value || null });
+}
+
+function setTeamSize(percent) {
+  const scale = Math.max(0.5, Math.min(2, (parseInt(percent) || 100) / 100));
+  sendUpdate({ team_text_scale: scale });
 }
 
 // ── Ads ──────────────────────────────────────────────────────────────────────
@@ -911,6 +925,11 @@ function updatePreview(s) {
   document.getElementById('pv-away-score').style.color = ac;
   const pv = document.querySelector('.preview');
   if (pv) pv.style.fontFamily = s.text_font || "'Barlow Condensed', sans-serif";
+  const ts = s.team_text_scale || 1;
+  document.getElementById('pv-home-name').style.fontSize  = (11 * ts) + 'px';
+  document.getElementById('pv-away-name').style.fontSize  = (11 * ts) + 'px';
+  document.getElementById('pv-home-score').style.fontSize = (64 * ts) + 'px';
+  document.getElementById('pv-away-score').style.fontSize = (64 * ts) + 'px';
   document.getElementById('pv-plabel').textContent     = periodLabel(s.period, s.total_periods);
   document.getElementById('pv-clock').textContent      = pad(s.minute) + ':' + pad(s.second);
   const rem = Math.max(0, s.duration_min * 60 - (s.minute * 60 + s.second));
