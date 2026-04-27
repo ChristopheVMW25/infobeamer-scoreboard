@@ -292,17 +292,21 @@ function render(s) {
     showNotif(s.last_event);
   }
 
+  document.body.style.fontFamily = s.text_font || "'Barlow Condensed', sans-serif";
+
   if (s.home_color) {
     document.querySelector('.pv-home').style.background = s.home_color;
     const htc = isLight(s.home_color);
-    document.getElementById('home-name').style.color  = htc ? '#000' : '#fff';
-    document.getElementById('home-score').style.color = htc ? '#000' : '#fff';
+    const autoColor = htc ? '#000' : '#fff';
+    document.getElementById('home-name').style.color  = s.home_text_color || autoColor;
+    document.getElementById('home-score').style.color = s.home_text_color || autoColor;
   }
   if (s.away_color) {
     document.querySelector('.pv-away').style.background = s.away_color;
     const atc = isLight(s.away_color);
-    document.getElementById('away-name').style.color  = atc ? '#000' : '#fff';
-    document.getElementById('away-score').style.color = atc ? '#000' : '#fff';
+    const autoColor = atc ? '#000' : '#fff';
+    document.getElementById('away-name').style.color  = s.away_text_color || autoColor;
+    document.getElementById('away-score').style.color = s.away_text_color || autoColor;
   }
   document.getElementById('home-score').textContent = s.home_score;
   document.getElementById('away-score').textContent = s.away_score;

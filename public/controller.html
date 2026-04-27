@@ -119,6 +119,34 @@ header h1 { font-family:'Barlow Condensed',sans-serif; font-weight:900; font-siz
 .color-swatch input[type=color] {
   opacity:0; position:absolute; inset:0; width:100%; height:100%; cursor:pointer; border:none; padding:0;
 }
+.text-swatch {
+  width:30px; height:30px; border-radius:6px;
+  border:2px solid rgba(255,255,255,.25); flex-shrink:0;
+  cursor:pointer; transition:border-color .2s; position:relative;
+  display:flex; align-items:center; justify-content:center;
+  background:#1a1a23;
+  font-family:'Barlow Condensed',sans-serif; font-weight:900;
+  font-size:14px; line-height:1;
+}
+.text-swatch:hover { border-color:rgba(255,255,255,.5); }
+.text-swatch input[type=color] {
+  opacity:0; position:absolute; inset:0; width:100%; height:100%; cursor:pointer; border:none; padding:0;
+}
+.text-swatch .auto-x {
+  position:absolute; top:-6px; right:-6px;
+  width:16px; height:16px; border-radius:50%;
+  background:var(--card); border:1px solid var(--border); color:var(--muted);
+  font-size:11px; line-height:14px; text-align:center; cursor:pointer;
+  display:none;
+}
+.text-swatch.custom .auto-x { display:block; }
+.text-swatch.custom .auto-x:hover { color:var(--red); }
+.font-select {
+  background:var(--card); color:var(--text);
+  border:1px solid var(--border); border-radius:6px;
+  padding:4px 8px; font-size:12px;
+  font-family:'Barlow Condensed',sans-serif;
+}
 .color-presets { display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
 .preset-dot {
   width:22px; height:22px; border-radius:50%;
@@ -236,6 +264,15 @@ header h1 { font-family:'Barlow Condensed',sans-serif; font-weight:900; font-siz
     <span id="format-badge" style="font-size:11px;background:var(--card);border:1px solid var(--border);border-radius:6px;padding:3px 10px;color:var(--sub)">2 × 20 min</span>
   </div>
   <div style="display:flex;align-items:center;gap:10px">
+    <select id="font-select" class="font-select" onchange="setFont(this.value)" title="Display font">
+      <option value="">Default font</option>
+      <option value="Arial Black, sans-serif">Arial Black</option>
+      <option value="Impact, Charcoal, sans-serif">Impact</option>
+      <option value="Verdana, sans-serif">Verdana</option>
+      <option value="Tahoma, sans-serif">Tahoma</option>
+      <option value="'Trebuchet MS', sans-serif">Trebuchet MS</option>
+      <option value="'Courier New', monospace">Courier</option>
+    </select>
     <div style="display:flex;gap:4px">
       <button class="pill active" id="btn-nl" onclick="setLang('nl')" style="padding:4px 10px;font-size:12px">NL</button>
       <button class="pill"        id="btn-en" onclick="setLang('en')" style="padding:4px 10px;font-size:12px">EN</button>
@@ -314,8 +351,12 @@ header h1 { font-family:'Barlow Condensed',sans-serif; font-weight:900; font-siz
         <div style="display:flex;gap:8px;align-items:center;width:100%">
           <input class="team-name-input" id="home-name" value="Home" maxlength="14"
                  oninput="sendUpdate({home_name: this.value})">
-          <label class="color-swatch" id="home-swatch" title="Custom colour" style="background:#0a1447">
+          <label class="color-swatch" id="home-swatch" title="Background colour" style="background:#0a1447">
             <input type="color" id="home-color" value="#0a1447" oninput="setTeamColor('home',this.value)">
+          </label>
+          <label class="text-swatch" id="home-text-swatch" title="Text colour (auto if not set)" style="color:#fff">Aa
+            <input type="color" id="home-text-color" value="#ffffff" oninput="setTeamTextColor('home',this.value)">
+            <span class="auto-x" onclick="event.preventDefault();event.stopPropagation();clearTeamTextColor('home')" title="Reset to auto">×</span>
           </label>
         </div>
         <div class="color-presets" id="home-presets"></div>
@@ -334,8 +375,12 @@ header h1 { font-family:'Barlow Condensed',sans-serif; font-weight:900; font-siz
         <div style="display:flex;gap:8px;align-items:center;width:100%">
           <input class="team-name-input" id="away-name" value="Away" maxlength="14"
                  oninput="sendUpdate({away_name: this.value})">
-          <label class="color-swatch" id="away-swatch" title="Custom colour" style="background:#420a0a">
+          <label class="color-swatch" id="away-swatch" title="Background colour" style="background:#420a0a">
             <input type="color" id="away-color" value="#420a0a" oninput="setTeamColor('away',this.value)">
+          </label>
+          <label class="text-swatch" id="away-text-swatch" title="Text colour (auto if not set)" style="color:#fff">Aa
+            <input type="color" id="away-text-color" value="#ffffff" oninput="setTeamTextColor('away',this.value)">
+            <span class="auto-x" onclick="event.preventDefault();event.stopPropagation();clearTeamTextColor('away')" title="Reset to auto">×</span>
           </label>
         </div>
         <div class="color-presets" id="away-presets"></div>
@@ -515,8 +560,30 @@ function handleState(s) {
   // Colours
   applyColors(s.home_color || '#0a1447', s.away_color || '#420a0a');
 
+  // Text colour overrides
+  syncTextSwatch('home', s.home_text_color);
+  syncTextSwatch('away', s.away_text_color);
+
+  // Font
+  const fs = document.getElementById('font-select');
+  if (fs && fs.value !== (s.text_font || '')) fs.value = s.text_font || '';
+
   // Preview
   updatePreview(s);
+}
+
+function syncTextSwatch(team, color) {
+  const sw = document.getElementById(team + '-text-swatch');
+  const inp = document.getElementById(team + '-text-color');
+  if (color) {
+    sw.classList.add('custom');
+    sw.style.color = color;
+    inp.value = color;
+  } else {
+    sw.classList.remove('custom');
+    sw.style.color = '#fff';
+    inp.value = '#ffffff';
+  }
 }
 
 // ── Format setup ──────────────────────────────────────────────────────────────
@@ -584,6 +651,18 @@ buildPresets();
 
 function setTeamColor(team, color) {
   sendUpdate({ [team + '_color']: color });
+}
+
+function setTeamTextColor(team, color) {
+  sendUpdate({ [team + '_text_color']: color });
+}
+
+function clearTeamTextColor(team) {
+  sendUpdate({ [team + '_text_color']: null });
+}
+
+function setFont(value) {
+  sendUpdate({ text_font: value || null });
 }
 
 function isLight(hex) {
@@ -678,6 +757,17 @@ function updatePreview(s) {
   document.getElementById('pv-away-name').textContent  = s.away_name.toUpperCase().slice(0,12);
   document.getElementById('pv-home-score').textContent = s.home_score;
   document.getElementById('pv-away-score').textContent = s.away_score;
+
+  const homeAuto = isLight(s.home_color || '#0a1447') ? '#000' : '#fff';
+  const awayAuto = isLight(s.away_color || '#420a0a') ? '#000' : '#fff';
+  const hc = s.home_text_color || homeAuto;
+  const ac = s.away_text_color || awayAuto;
+  document.getElementById('pv-home-name').style.color  = hc;
+  document.getElementById('pv-home-score').style.color = hc;
+  document.getElementById('pv-away-name').style.color  = ac;
+  document.getElementById('pv-away-score').style.color = ac;
+  const pv = document.querySelector('.preview');
+  if (pv) pv.style.fontFamily = s.text_font || "'Barlow Condensed', sans-serif";
   document.getElementById('pv-plabel').textContent     = periodLabel(s.period, s.total_periods);
   document.getElementById('pv-clock').textContent      = pad(s.minute) + ':' + pad(s.second);
   const rem = Math.max(0, s.duration_min * 60 - (s.minute * 60 + s.second));
