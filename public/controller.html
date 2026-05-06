@@ -66,36 +66,81 @@ header h1 { font-family:'Barlow Condensed',sans-serif; font-weight:900; font-siz
 .format-summary { font-size:13px; color:var(--sub); flex:1; }
 .format-summary strong { color:var(--gold); font-weight:600; }
 
-/* ── Preview ── */
-.preview-wrap { display:flex; flex-direction:column; align-items:center; gap:8px; }
+/* ── Preview (pixel-faithful 350×75 LED grid, scaled 2×) ─────────────── */
+.preview-wrap  { display:flex; flex-direction:column; align-items:center; gap:8px; }
 .preview-label { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; }
-.preview {
-  width:512px; height:128px; background:#000;
+.preview-frame {
+  width:700px; height:150px; background:#000;
   border:1px solid var(--border); border-radius:4px;
-  display:grid;
-  grid-template-columns: 206px 100px 206px;
-  grid-template-rows: 111px 17px;
-  overflow:hidden;
-  font-family:'Barlow Condensed',sans-serif;
+  overflow:hidden; position:relative;
 }
-@media (max-width:560px) { .preview { transform:scale(.68); transform-origin:top center; margin-bottom:-42px; } }
+.preview-board {
+  width:350px; height:75px;
+  display:grid;
+  grid-template-columns: 125px 100px 125px;
+  grid-template-rows: 60px 15px;
+  transform:scale(2); transform-origin:top left;
+  font-family:'Barlow Condensed', sans-serif;
+}
+@media (max-width:740px) {
+  .preview-frame { width:525px; height:113px; }
+  .preview-board { transform:scale(1.5); }
+}
+@media (max-width:560px) {
+  .preview-frame { width:350px; height:75px; }
+  .preview-board { transform:scale(1); }
+}
 
-.pv-home, .pv-away, .pv-centre { grid-row:1; }
-.pv-home   { background:#0d1f55; display:flex; flex-direction:column; justify-content:center; align-items:flex-end; padding:0 8px; }
-.pv-centre { background:#111318; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; }
-.pv-away   { background:#551010; display:flex; flex-direction:column; justify-content:center; align-items:flex-start; padding:0 8px; }
-.pv-bar    { grid-column:1/4; background:#0a0b10; display:flex; align-items:center; justify-content:space-between; padding:0 8px; }
-.pv-team-name { font-size:11px; color:#4a5270; font-weight:600; text-transform:uppercase; letter-spacing:.5px; margin-bottom:2px; }
-.pv-score     { font-size:64px; line-height:1; color:#fff; font-weight:900; }
-.pv-plabel    { font-size:12px; font-weight:700; color:#f5c518; }
-.pv-live      { font-size:9px; font-weight:600; color:#22c55e; }
-.pv-paused    { font-size:9px; font-weight:600; color:#4a5270; }
-.pv-clock     { font-size:15px; font-weight:700; color:#fff; letter-spacing:1px; }
-.pv-remain    { font-size:8px; color:#4a5270; }
-.pv-dots      { display:flex; gap:5px; align-items:center; }
-.pv-dot       { width:7px; height:7px; border-radius:1px; background:#25272f; }
-.pv-dot.on    { background:#f5c518; }
-.pv-pname     { font-size:10px; color:#4a5270; }
+.pv-home   { background:rgb(10,20,71);  display:flex; flex-direction:row;         align-items:center; justify-content:flex-end;   padding:0 4px; gap:4px; }
+.pv-centre { background:rgb(18,18,23);  display:flex; flex-direction:column;      align-items:center; justify-content:flex-start; padding:2px 0 0; gap:0; }
+.pv-away   { background:rgb(66,10,10);  display:flex; flex-direction:row-reverse; align-items:center; justify-content:flex-end;   padding:0 4px; gap:4px; }
+.pv-bar    { grid-column:1/4; background:rgb(10,10,15); display:flex; align-items:center; justify-content:space-between; padding:0 5px; }
+.pv-home.has-logo, .pv-away.has-logo { justify-content:space-between; }
+.pv-centre.no-timer .pv-clock,
+.pv-centre.no-timer .pv-remain,
+.pv-centre.no-timer .pv-status { display:none; }
+.pv-centre.no-timer { justify-content:center; padding-top:0; }
+
+.pv-brand-stack {
+  display:flex; flex-direction:column; justify-content:center;
+  flex:1; min-width:0;
+}
+.pv-home .pv-brand-stack { align-items:flex-end;   text-align:right; }
+.pv-away .pv-brand-stack { align-items:flex-start; text-align:left;  }
+.pv-home.has-logo .pv-brand-stack,
+.pv-away.has-logo .pv-brand-stack { align-items:center; text-align:center; }
+
+.pv-team-name {
+  font-size:8px; font-weight:600; color:#666677;
+  text-transform:uppercase; letter-spacing:.3px;
+  white-space:nowrap; overflow:hidden; max-width:117px;
+  margin-bottom:1px;
+}
+.pv-team-logo {
+  display:block; max-width:36px; max-height:56px;
+  object-fit:contain; flex-shrink:0;
+}
+.pv-score { font-size:50px; font-weight:900; color:#fff; line-height:1; }
+.pv-home.has-logo .pv-score,
+.pv-away.has-logo .pv-score { font-size:56px; }
+.pv-home.has-logo.show-name .pv-score,
+.pv-away.has-logo.show-name .pv-score { font-size:44px; }
+.pv-home.has-logo.show-name.name-md .pv-score,
+.pv-away.has-logo.show-name.name-md .pv-score { font-size:40px; }
+.pv-home.has-logo.show-name.name-lg .pv-score,
+.pv-away.has-logo.show-name.name-lg .pv-score { font-size:36px; }
+
+.pv-plabel { font-size:8px;  font-weight:700; color:#f5c518; line-height:1.1; }
+.pv-status { font-size:7px;  font-weight:600; line-height:1.2; }
+.pv-status.live   { color:#26e159; }
+.pv-status.paused { color:#666677; }
+.pv-clock  { font-size:18px; font-weight:700; color:#fff; letter-spacing:.5px; line-height:1.1; }
+.pv-remain { font-size:6px;  color:#666677; line-height:1.2; }
+
+.pv-dots { display:flex; gap:3px; align-items:center; }
+.pv-dot  { width:5px; height:5px; border-radius:1px; background:#383840; }
+.pv-dot.on { background:#f5c518; }
+.pv-pname  { font-size:7px; color:#666677; }
 
 /* ── Scoreboard controls ── */
 .scoreboard { background:var(--card); border:1px solid var(--border); border-radius:12px; overflow:hidden; }
@@ -126,6 +171,69 @@ header h1 { font-family:'Barlow Condensed',sans-serif; font-weight:900; font-siz
   transition:transform .12s, border-color .15s;
 }
 .preset-dot:hover { transform:scale(1.25); border-color:rgba(255,255,255,.6); }
+.logo-btn {
+  width:30px; height:30px; border-radius:6px;
+  border:2px solid rgba(255,255,255,.25); background:rgba(255,255,255,.08);
+  color:#fff; font-size:14px; cursor:pointer; flex-shrink:0;
+  display:flex; align-items:center; justify-content:center;
+  transition:background .15s, border-color .15s;
+}
+.logo-btn:hover { background:rgba(255,255,255,.18); border-color:rgba(255,255,255,.5); }
+.logo-row { display:flex; align-items:center; gap:8px; width:100%; padding:6px 8px;
+  background:rgba(0,0,0,.22); border-radius:7px; }
+.logo-thumb {
+  height:34px; max-width:90px; object-fit:contain; flex-shrink:0;
+  background:rgba(255,255,255,.94); border-radius:4px; padding:2px;
+}
+.logo-meta { flex:1; font-size:11px; color:rgba(255,255,255,.7); }
+.logo-toggle { display:flex; align-items:center; gap:5px; font-size:11px;
+  color:rgba(255,255,255,.85); cursor:pointer; user-select:none;
+  font-family:'Barlow',sans-serif; font-weight:500; white-space:nowrap;
+}
+.logo-toggle input { width:13px; height:13px; cursor:pointer; accent-color:var(--gold); }
+
+.name-style-row, .bg-style-row {
+  display:flex; align-items:center; gap:6px; width:100%;
+  padding:5px 8px; background:rgba(0,0,0,.18); border-radius:7px;
+  font-size:11px; color:rgba(255,255,255,.7);
+  flex-wrap:wrap;
+}
+.name-style-row .nm-label,
+.bg-style-row   .nm-label { font-weight:600; letter-spacing:.4px; text-transform:uppercase; }
+.bg-style-row .color-presets { margin-left:auto; }
+.text-color-swatch {
+  width:24px; height:24px; border-radius:5px;
+  border:2px solid rgba(255,255,255,.25); cursor:pointer;
+  position:relative; flex-shrink:0;
+  background-image:linear-gradient(45deg,#444 25%,transparent 25%,transparent 75%,#444 75%),
+                   linear-gradient(45deg,#444 25%,transparent 25%,transparent 75%,#444 75%);
+  background-size:8px 8px; background-position:0 0, 4px 4px;
+}
+.text-color-swatch input[type=color] {
+  opacity:0; position:absolute; inset:0; width:100%; height:100%;
+  cursor:pointer; border:none; padding:0;
+}
+.size-group { display:flex; gap:3px; margin-left:auto; }
+.size-btn {
+  background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.18);
+  color:#fff; font-family:'Barlow Condensed',sans-serif; font-weight:700;
+  font-size:12px; width:26px; height:24px; border-radius:5px; cursor:pointer;
+  transition:background .15s, border-color .15s;
+}
+.size-btn:hover { background:rgba(255,255,255,.18); }
+.size-btn.active { background:var(--gold); color:#000; border-color:var(--gold); }
+.auto-btn {
+  background:none; border:1px solid rgba(255,255,255,.2); color:rgba(255,255,255,.85);
+  font-size:10px; padding:3px 8px; border-radius:5px; cursor:pointer;
+  font-family:'Barlow',sans-serif; font-weight:600;
+}
+.auto-btn:hover { background:rgba(255,255,255,.12); }
+.logo-remove {
+  background:none; border:1px solid rgba(255,255,255,.25); color:#fff;
+  font-size:11px; padding:4px 9px; border-radius:5px; cursor:pointer;
+  font-family:'Barlow',sans-serif; font-weight:600;
+}
+.logo-remove:hover { background:rgba(239,68,68,.25); border-color:var(--red); }
 .score-controls { display:flex; align-items:center; gap:10px; margin-top:2px; }
 .score-btn {
   width:44px; height:44px; border-radius:50%;
@@ -281,28 +389,35 @@ header h1 { font-family:'Barlow Condensed',sans-serif; font-weight:900; font-siz
     </div>
   </div>
 
-  <!-- 512×128 preview -->
+  <!-- LED-grid preview (native 350×75, scaled 2×) -->
   <div class="preview-wrap">
-    <div class="preview-label">Display preview — 512 × 128 px</div>
-    <div class="preview">
-      <div class="pv-home">
-        <div class="pv-team-name" id="pv-home-name">HOME</div>
-        <div class="pv-score"     id="pv-home-score">0</div>
-      </div>
-      <div class="pv-centre">
-        <div class="pv-plabel"  id="pv-plabel">H1</div>
-        <div class="pv-live"    id="pv-live" style="display:none">LIVE</div>
-        <div class="pv-paused"  id="pv-paused">PAUSED</div>
-        <div class="pv-clock"   id="pv-clock">00:00</div>
-        <div class="pv-remain"  id="pv-remain">— left</div>
-      </div>
-      <div class="pv-away">
-        <div class="pv-team-name" id="pv-away-name">AWAY</div>
-        <div class="pv-score"     id="pv-away-score">0</div>
-      </div>
-      <div class="pv-bar">
-        <div class="pv-dots" id="pv-dots"></div>
-        <div class="pv-pname" id="pv-pname">—</div>
+    <div class="preview-label">Display preview — 350 × 75 px (native LED, 2× zoom)</div>
+    <div class="preview-frame">
+      <div class="preview-board">
+        <div class="pv-home">
+          <img class="pv-team-logo" id="pv-home-logo" alt="" hidden>
+          <div class="pv-brand-stack">
+            <div class="pv-team-name" id="pv-home-name">HOME</div>
+            <div class="pv-score"     id="pv-home-score">0</div>
+          </div>
+        </div>
+        <div class="pv-centre">
+          <div class="pv-plabel" id="pv-plabel">H1</div>
+          <div class="pv-status paused" id="pv-status">PAUSED</div>
+          <div class="pv-clock"  id="pv-clock">00:00</div>
+          <div class="pv-remain" id="pv-remain">— left</div>
+        </div>
+        <div class="pv-away">
+          <img class="pv-team-logo" id="pv-away-logo" alt="" hidden>
+          <div class="pv-brand-stack">
+            <div class="pv-team-name" id="pv-away-name">AWAY</div>
+            <div class="pv-score"     id="pv-away-score">0</div>
+          </div>
+        </div>
+        <div class="pv-bar">
+          <div class="pv-dots" id="pv-dots"></div>
+          <div class="pv-pname" id="pv-pname">—</div>
+        </div>
       </div>
     </div>
   </div>
@@ -314,11 +429,38 @@ header h1 { font-family:'Barlow Condensed',sans-serif; font-weight:900; font-siz
         <div style="display:flex;gap:8px;align-items:center;width:100%">
           <input class="team-name-input" id="home-name" value="Home" maxlength="14"
                  oninput="sendUpdate({home_name: this.value})">
-          <label class="color-swatch" id="home-swatch" title="Custom colour" style="background:#0a1447">
-            <input type="color" id="home-color" value="#0a1447" oninput="setTeamColor('home',this.value)">
-          </label>
+          <button class="logo-btn" title="Upload logo (replaces name on display)"
+                  onclick="document.getElementById('home-logo-file').click()">📷</button>
+          <input type="file" id="home-logo-file" accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml" hidden
+                 onchange="uploadLogo('home', this.files[0])">
         </div>
-        <div class="color-presets" id="home-presets"></div>
+        <div class="bg-style-row">
+          <span class="nm-label">Bg</span>
+          <label class="color-swatch" id="home-swatch" title="Custom team background colour"
+                 style="background:#0a1447">
+            <input type="color" id="home-color" value="#0a1447"
+                   oninput="setTeamColor('home',this.value)">
+          </label>
+          <div class="color-presets" id="home-presets"></div>
+        </div>
+        <div class="name-style-row">
+          <span class="nm-label">Aa</span>
+          <label class="text-color-swatch" id="home-name-swatch" title="Name text colour"
+                 style="background:rgba(255,255,255,.45)">
+            <input type="color" id="home-name-color" value="#ffffff"
+                   oninput="setNameColor('home', this.value)">
+          </label>
+          <button class="auto-btn" onclick="setNameColor('home','')">Auto</button>
+        </div>
+        <div class="logo-row" id="home-logo-row" style="display:none">
+          <img class="logo-thumb" id="home-logo-thumb" alt="">
+          <label class="logo-toggle">
+            <input type="checkbox" id="home-show-name" checked
+                   onchange="sendUpdate({home_show_name: this.checked})">
+            Show name
+          </label>
+          <button class="logo-remove" onclick="removeLogo('home')">Remove</button>
+        </div>
         <div class="score-controls">
           <button class="score-btn" onclick="adj('home',-1)">−</button>
           <div class="score-digit" id="home-score">0</div>
@@ -334,11 +476,38 @@ header h1 { font-family:'Barlow Condensed',sans-serif; font-weight:900; font-siz
         <div style="display:flex;gap:8px;align-items:center;width:100%">
           <input class="team-name-input" id="away-name" value="Away" maxlength="14"
                  oninput="sendUpdate({away_name: this.value})">
-          <label class="color-swatch" id="away-swatch" title="Custom colour" style="background:#420a0a">
-            <input type="color" id="away-color" value="#420a0a" oninput="setTeamColor('away',this.value)">
-          </label>
+          <button class="logo-btn" title="Upload logo (replaces name on display)"
+                  onclick="document.getElementById('away-logo-file').click()">📷</button>
+          <input type="file" id="away-logo-file" accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml" hidden
+                 onchange="uploadLogo('away', this.files[0])">
         </div>
-        <div class="color-presets" id="away-presets"></div>
+        <div class="bg-style-row">
+          <span class="nm-label">Bg</span>
+          <label class="color-swatch" id="away-swatch" title="Custom team background colour"
+                 style="background:#420a0a">
+            <input type="color" id="away-color" value="#420a0a"
+                   oninput="setTeamColor('away',this.value)">
+          </label>
+          <div class="color-presets" id="away-presets"></div>
+        </div>
+        <div class="name-style-row">
+          <span class="nm-label">Aa</span>
+          <label class="text-color-swatch" id="away-name-swatch" title="Name text colour"
+                 style="background:rgba(255,255,255,.45)">
+            <input type="color" id="away-name-color" value="#ffffff"
+                   oninput="setNameColor('away', this.value)">
+          </label>
+          <button class="auto-btn" onclick="setNameColor('away','')">Auto</button>
+        </div>
+        <div class="logo-row" id="away-logo-row" style="display:none">
+          <img class="logo-thumb" id="away-logo-thumb" alt="">
+          <label class="logo-toggle">
+            <input type="checkbox" id="away-show-name" checked
+                   onchange="sendUpdate({away_show_name: this.checked})">
+            Show name
+          </label>
+          <button class="logo-remove" onclick="removeLogo('away')">Remove</button>
+        </div>
         <div class="score-controls">
           <button class="score-btn" onclick="adj('away',-1)">−</button>
           <div class="score-digit" id="away-score">0</div>
@@ -354,6 +523,12 @@ header h1 { font-family:'Barlow Condensed',sans-serif; font-weight:900; font-siz
 
     <!-- Clock controls -->
     <div class="ctrl-row">
+      <label class="logo-toggle" title="Show or hide the timer on the LED display">
+        <input type="checkbox" id="show-timer" checked
+               onchange="sendUpdate({show_timer: this.checked})">
+        Show timer
+      </label>
+      <div class="vdiv"></div>
       <button class="ctrl-btn go" id="btn-start" onclick="toggleClock()">▶ Start</button>
       <button class="ctrl-btn" onclick="resetClock()" style="font-family:'Barlow',sans-serif;font-size:13px;font-weight:600">↺ Reset clock</button>
       <div class="vdiv"></div>
@@ -362,6 +537,24 @@ header h1 { font-family:'Barlow Condensed',sans-serif; font-weight:900; font-siz
         <input type="number" id="mm-in" value="0" min="0" max="99" oninput="setTime()">
         <span class="time-sep">:</span>
         <input type="number" id="ss-in" value="0" min="0" max="59" oninput="setTime()">
+      </div>
+    </div>
+
+    <!-- Display sizing -->
+    <div class="ctrl-row" style="gap:14px">
+      <span style="font-size:12px;color:var(--sub)">Team name size</span>
+      <div class="size-group" id="name-size-group">
+        <button class="size-btn" data-size="8"  onclick="setNameSize(8)">S</button>
+        <button class="size-btn" data-size="11" onclick="setNameSize(11)">M</button>
+        <button class="size-btn" data-size="14" onclick="setNameSize(14)">L</button>
+      </div>
+      <div class="vdiv"></div>
+      <span style="font-size:12px;color:var(--sub)">Timer size</span>
+      <div class="size-group" id="clock-size-group">
+        <button class="size-btn" data-size="14" onclick="setClockSize(14)">S</button>
+        <button class="size-btn" data-size="18" onclick="setClockSize(18)">M</button>
+        <button class="size-btn" data-size="22" onclick="setClockSize(22)">L</button>
+        <button class="size-btn" data-size="26" onclick="setClockSize(26)">XL</button>
       </div>
     </div>
   </div>
@@ -394,6 +587,44 @@ header h1 { font-family:'Barlow Condensed',sans-serif; font-weight:900; font-siz
       </div>
       <div class="timeline" id="evt-timeline">
         <div style="padding:12px 18px;font-size:12px;color:var(--muted)">No events yet</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sponsors -->
+  <div>
+    <div class="section-hdr">Sponsors <span style="font-size:10px;color:var(--muted);text-transform:none;letter-spacing:0">— full-board takeover, rotates between matches</span></div>
+    <div class="sessions-card" style="margin-top:8px">
+      <div class="events-input">
+        <button class="ctrl-btn" onclick="document.getElementById('sponsor-file').click()">+ Upload sponsor</button>
+        <input type="file" id="sponsor-file" accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml" multiple hidden
+               onchange="uploadSponsors(this.files)">
+        <button class="ctrl-btn go" onclick="testSponsor()" title="Show next sponsor on the LED right now (ignores schedule)">▶ Show now</button>
+        <label class="logo-toggle">
+          <input type="checkbox" id="sp-enable"
+                 onchange="sendUpdate({sponsor_enabled: this.checked})">
+          Enable rotation
+        </label>
+        <label class="logo-toggle">
+          <input type="checkbox" id="sp-paused-only"
+                 onchange="sendUpdate({sponsor_only_when_paused: this.checked})">
+          Only when paused
+        </label>
+        <span style="font-size:12px;color:var(--sub)">Every</span>
+        <div class="time-input" style="padding:4px 8px">
+          <input type="number" id="sp-interval" value="30" min="5" max="600"
+                 onchange="sendUpdate({sponsor_interval: parseInt(this.value)||30})">
+          <span class="time-sep">s</span>
+        </div>
+        <span style="font-size:12px;color:var(--sub)">show for</span>
+        <div class="time-input" style="padding:4px 8px">
+          <input type="number" id="sp-duration" value="8" min="2" max="60"
+                 onchange="sendUpdate({sponsor_duration: parseInt(this.value)||8})">
+          <span class="time-sep">s</span>
+        </div>
+      </div>
+      <div id="sponsor-list" style="padding:10px 18px;display:flex;flex-wrap:wrap;gap:10px">
+        <div style="font-size:12px;color:var(--muted)">No sponsors uploaded</div>
       </div>
     </div>
   </div>
@@ -515,8 +746,185 @@ function handleState(s) {
   // Colours
   applyColors(s.home_color || '#0a1447', s.away_color || '#420a0a');
 
+  // Logos
+  syncLogoUI('home', s.home_logo || '', s.home_show_name !== false);
+  syncLogoUI('away', s.away_logo || '', s.away_show_name !== false);
+
+  // Name colour (per team) + shared size
+  syncNameColourUI('home', s.home_name_color || '');
+  syncNameColourUI('away', s.away_name_color || '');
+  syncSizeGroup('name-size-group',  s.name_size  || 8);
+  syncSizeGroup('clock-size-group', s.clock_size || 18);
+
+  // Timer visibility + clock font-size in preview
+  const tm = document.getElementById('show-timer');
+  if (tm && document.activeElement !== tm) tm.checked = s.show_timer !== false;
+  document.querySelector('.pv-centre').classList.toggle('no-timer', s.show_timer === false);
+  document.getElementById('pv-clock').style.fontSize = (s.clock_size || 18) + 'px';
+
+  // Sponsors
+  syncSponsorsUI(s);
+
   // Preview
   updatePreview(s);
+}
+
+// ── Logos ────────────────────────────────────────────────────────────────────
+function syncLogoUI(team, url, showName) {
+  const row    = document.getElementById(team + '-logo-row');
+  const thumb  = document.getElementById(team + '-logo-thumb');
+  const cbx    = document.getElementById(team + '-show-name');
+  if (url) {
+    row.style.display = 'flex';
+    if (!thumb.src.endsWith(url)) thumb.src = url;
+  } else {
+    row.style.display = 'none';
+    thumb.removeAttribute('src');
+  }
+  if (cbx && document.activeElement !== cbx) cbx.checked = !!showName;
+}
+
+async function uploadLogo(team, file) {
+  if (!file) return;
+  if (file.size > 1.5 * 1024 * 1024) {
+    addLog(`Logo too large (${Math.round(file.size/1024)} KB, max 1.5 MB)`, 'err');
+    document.getElementById(team + '-logo-file').value = '';
+    return;
+  }
+  try {
+    const dataUrl = await new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload  = () => resolve(r.result);
+      r.onerror = () => reject(r.error);
+      r.readAsDataURL(file);
+    });
+    const res = await fetch('/api/logo/' + team, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ data: dataUrl }),
+    });
+    if (res.ok) {
+      addLog(`${team[0].toUpperCase() + team.slice(1)} logo uploaded`, 'ok');
+    } else {
+      const j = await res.json().catch(() => ({}));
+      addLog('Logo upload failed: ' + (j.error || res.status), 'err');
+    }
+  } catch (err) {
+    addLog('Logo upload error: ' + err.message, 'err');
+  } finally {
+    // reset so the same filename can be re-picked
+    document.getElementById(team + '-logo-file').value = '';
+  }
+}
+
+function setNameColor(team, hex) {
+  sendUpdate({ [team + '_name_color']: hex });
+}
+function setNameSize(px) {
+  sendUpdate({ name_size: px });
+}
+function setClockSize(px) {
+  sendUpdate({ clock_size: px });
+}
+
+function syncNameColourUI(team, color) {
+  const swatch = document.getElementById(team + '-name-swatch');
+  const picker = document.getElementById(team + '-name-color');
+  swatch.style.background = color || 'rgba(255,255,255,.45)';
+  if (color && document.activeElement !== picker) picker.value = color;
+}
+function syncSizeGroup(groupId, px) {
+  const target = Number(px);
+  document.querySelectorAll('#' + groupId + ' .size-btn').forEach(b => {
+    b.classList.toggle('active', Number(b.dataset.size) === target);
+  });
+}
+
+// ── Sponsors ─────────────────────────────────────────────────────────────────
+async function uploadSponsors(files) {
+  if (!files || !files.length) return;
+  for (const f of files) {
+    if (f.size > 1.5 * 1024 * 1024) {
+      addLog(`${f.name}: too large (max 1.5 MB)`, 'err');
+      continue;
+    }
+    try {
+      const dataUrl = await new Promise((resolve, reject) => {
+        const r = new FileReader();
+        r.onload  = () => resolve(r.result);
+        r.onerror = () => reject(r.error);
+        r.readAsDataURL(f);
+      });
+      const baseName = f.name.replace(/\.[^.]+$/, '');
+      const res = await fetch('/api/sponsors', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data: dataUrl, name: baseName }),
+      });
+      if (res.ok) addLog(`Sponsor "${f.name}" uploaded`, 'ok');
+      else { const j = await res.json().catch(() => ({})); addLog(`Upload ${f.name}: ${j.error || res.status}`, 'err'); }
+    } catch (err) {
+      addLog(`Upload ${f.name}: ${err.message}`, 'err');
+    }
+  }
+  document.getElementById('sponsor-file').value = '';
+}
+
+function testSponsor() {
+  // Use a plain state update (timestamp ensures monotonic increase) so the
+  // trigger works without needing the optional 'show_sponsor' command handler.
+  sendUpdate({ sponsor_trigger: Date.now() });
+  addLog('Sponsor test triggered', 'ok');
+}
+
+async function deleteSponsor(id) {
+  if (!confirm('Remove this sponsor?')) return;
+  try {
+    const res = await fetch('/api/sponsors/' + encodeURIComponent(id), { method: 'DELETE' });
+    if (res.ok) addLog('Sponsor removed', 'ok');
+  } catch (err) {
+    addLog('Sponsor remove failed: ' + err.message, 'err');
+  }
+}
+
+function renderSponsors(list) {
+  const el = document.getElementById('sponsor-list');
+  if (!list || !list.length) {
+    el.innerHTML = '<div style="font-size:12px;color:var(--muted)">No sponsors uploaded</div>';
+    return;
+  }
+  el.innerHTML = list.map(s => {
+    const safeId = s.id.replace(/'/g, "\\'");
+    return `<div style="position:relative;width:120px;background:#0a0c14;border:1px solid var(--border);border-radius:6px;padding:6px">
+      <img src="${s.url}" alt="" style="width:100%;height:60px;object-fit:contain;background:#1a1d2a;border-radius:3px">
+      <div title="${s.id}" style="font-size:10px;color:var(--muted);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${s.id}</div>
+      <button onclick="deleteSponsor('${safeId}')" title="Remove"
+              style="position:absolute;top:4px;right:4px;background:rgba(0,0,0,.7);border:1px solid var(--border);color:#fff;border-radius:3px;padding:0 6px;font-size:13px;cursor:pointer;line-height:1.4">×</button>
+    </div>`;
+  }).join('');
+}
+
+function syncSponsorsUI(s) {
+  const en = document.getElementById('sp-enable');
+  if (en && document.activeElement !== en) en.checked = !!s.sponsor_enabled;
+  const po = document.getElementById('sp-paused-only');
+  if (po && document.activeElement !== po) po.checked = s.sponsor_only_when_paused !== false;
+  const iv = document.getElementById('sp-interval');
+  if (iv && document.activeElement !== iv) iv.value = s.sponsor_interval || 30;
+  const du = document.getElementById('sp-duration');
+  if (du && document.activeElement !== du) du.value = s.sponsor_duration || 8;
+  renderSponsors(s.sponsors || []);
+}
+
+async function removeLogo(team) {
+  if (!confirm('Remove this team\'s logo?')) return;
+  try {
+    const res = await fetch('/api/logo/' + team, { method: 'DELETE' });
+    if (res.ok) addLog(`${team[0].toUpperCase() + team.slice(1)} logo removed`, 'ok');
+    else addLog('Logo remove failed: ' + res.status, 'err');
+  } catch (err) {
+    addLog('Logo remove error: ' + err.message, 'err');
+  }
 }
 
 // ── Format setup ──────────────────────────────────────────────────────────────
@@ -631,7 +1039,8 @@ function applyColors(hc, ac) {
       b.style.borderColor  = bc;
     });
     // Preview
-    document.getElementById(`pv-${team}-name`).style.color  = mc;
+    const pvName = document.getElementById(`pv-${team}-name`);
+    pvName.dataset.autoColor = mc;
     document.getElementById(`pv-${team}-score`).style.color = tc;
   });
 }
@@ -673,9 +1082,45 @@ async function resetAll() {
 }
 
 // ── Preview ───────────────────────────────────────────────────────────────────
+function applyPreviewBrand(team, name, logoUrl, showName, nameColor, nameSize) {
+  const panel = document.querySelector('.pv-' + team);
+  const logo  = document.getElementById('pv-' + team + '-logo');
+  const nm    = document.getElementById('pv-' + team + '-name');
+  panel.classList.remove('name-md', 'name-lg');
+  const sz = Number(nameSize) || 8;
+  if (sz >= 13)      panel.classList.add('name-lg');
+  else if (sz >= 10) panel.classList.add('name-md');
+  // Native LED px — preview board is the same 350×75 grid scaled by transform.
+  nm.style.fontSize = sz + 'px';
+  // Custom name colour overrides the luminance-based default from applyColors().
+  // When cleared, fall back to applyColors()'s last value (re-applied below).
+  nm.style.color = nameColor || nm.dataset.autoColor || '';
+  if (logoUrl) {
+    if (!logo.src.endsWith(logoUrl)) logo.src = logoUrl;
+    logo.hidden = false;
+    panel.classList.add('has-logo');
+    if (showName) {
+      panel.classList.add('show-name');
+      nm.style.display = '';
+      nm.textContent = (name || '').toUpperCase().slice(0, 12);
+    } else {
+      panel.classList.remove('show-name');
+      nm.style.display = 'none';
+    }
+  } else {
+    logo.hidden = true;
+    logo.removeAttribute('src');
+    nm.style.display = '';
+    nm.textContent = (name || '').toUpperCase().slice(0, 12);
+    panel.classList.remove('has-logo');
+    panel.classList.remove('show-name');
+  }
+}
+
 function updatePreview(s) {
-  document.getElementById('pv-home-name').textContent  = s.home_name.toUpperCase().slice(0,12);
-  document.getElementById('pv-away-name').textContent  = s.away_name.toUpperCase().slice(0,12);
+  const sz = s.name_size || 8;
+  applyPreviewBrand('home', s.home_name, s.home_logo, s.home_show_name !== false, s.home_name_color || '', sz);
+  applyPreviewBrand('away', s.away_name, s.away_logo, s.away_show_name !== false, s.away_name_color || '', sz);
   document.getElementById('pv-home-score').textContent = s.home_score;
   document.getElementById('pv-away-score').textContent = s.away_score;
   document.getElementById('pv-plabel').textContent     = periodLabel(s.period, s.total_periods);
@@ -683,8 +1128,9 @@ function updatePreview(s) {
   const rem = Math.max(0, s.duration_min * 60 - (s.minute * 60 + s.second));
   const rm  = Math.floor(rem/60), rs = rem % 60;
   document.getElementById('pv-remain').textContent = rem === 0 ? ctLang.fullTime : rm > 0 ? ctLang.minLeft(rm) : ctLang.secLeft(rs);
-  document.getElementById('pv-live').style.display   = s.match_live ? '' : 'none';
-  document.getElementById('pv-paused').style.display = s.match_live ? 'none' : '';
+  const pvStatus = document.getElementById('pv-status');
+  pvStatus.textContent = s.match_live ? 'LIVE' : ctLang.paused;
+  pvStatus.className   = 'pv-status ' + (s.match_live ? 'live' : 'paused');
   const pfull = periodFullName(s.period, s.total_periods);
   document.getElementById('pv-pname').textContent = pfull;
 

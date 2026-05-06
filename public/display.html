@@ -21,37 +21,69 @@ body {
   position: absolute;
   width: 350px; height: 75px;
   display: grid;
-  grid-template-columns: 100px 150px 100px;
+  grid-template-columns: 125px 100px 125px;
   grid-template-rows: 60px 15px;
   transform-origin: top left;
   font-family: 'Barlow Condensed', sans-serif;
 }
 
-/* ── Panels ── */
-.pv-home   { background: rgb(10,20,71);  display:flex; flex-direction:column; justify-content:center; align-items:flex-end;   padding:0 4px; }
-.pv-centre { background: rgb(18,18,23);  display:flex; flex-direction:column; align-items:center; justify-content:flex-start; padding:2px 0 0; gap:0; }
-.pv-away   { background: rgb(66,10,10);  display:flex; flex-direction:column; justify-content:center; align-items:flex-start;  padding:0 4px; }
+/* ── Panels (logo on the side, score gets the rest) ── */
+.pv-home   { background: rgb(10,20,71);  display:flex; flex-direction:row;         align-items:center; justify-content:flex-end;   padding:0 4px; gap:4px; }
+.pv-centre { background: rgb(18,18,23);  display:flex; flex-direction:column;      align-items:center; justify-content:flex-start; padding:2px 0 0; gap:0; }
+.pv-away   { background: rgb(66,10,10);  display:flex; flex-direction:row-reverse; align-items:center; justify-content:flex-end;   padding:0 4px; gap:4px; }
 .pv-bar    { grid-column:1/4; background:rgb(10,10,15); display:flex; align-items:center; justify-content:space-between; padding:0 5px; }
+.pv-home.has-logo, .pv-away.has-logo { justify-content:space-between; }
+.pv-centre.no-timer .clock,
+.pv-centre.no-timer .remain,
+.pv-centre.no-timer .status { display:none; }
+.pv-centre.no-timer { justify-content:center; padding-top:0; }
+
+/* Stack of team-name + score, takes the panel space not used by the logo. */
+.brand-stack {
+  display:flex; flex-direction:column; justify-content:center;
+  flex:1; min-width:0;
+}
+.pv-home .brand-stack { align-items:flex-end;   text-align:right; }
+.pv-away .brand-stack { align-items:flex-start; text-align:left;  }
+.pv-home.has-logo .brand-stack,
+.pv-away.has-logo .brand-stack { align-items:center; text-align:center; }
 
 /* ── Team names ── */
 .team-name {
   font-size:8px; font-weight:600; color:#666677;
   text-transform:uppercase; letter-spacing:.3px;
-  white-space:nowrap; overflow:hidden; max-width:96px;
+  white-space:nowrap; overflow:hidden; max-width:117px;
   margin-bottom:1px;
+}
+
+/* ── Team logos: anchored to outer edge of each team panel ── */
+.team-logo {
+  display:block; max-width:36px; max-height:56px;
+  object-fit:contain; flex-shrink:0;
+  image-rendering:-webkit-optimize-contrast;
 }
 
 /* ── Scores ── */
 .score {
   font-size:50px; font-weight:900; color:#fff; line-height:1;
 }
+/* With logo on the side, the score gets the full panel height. */
+.pv-home.has-logo .score,
+.pv-away.has-logo .score { font-size:56px; }
+/* If the team name also shows alongside the score, leave room above it. */
+.pv-home.has-logo.show-name .score,
+.pv-away.has-logo.show-name .score { font-size:44px; }
+.pv-home.has-logo.show-name.name-md .score,
+.pv-away.has-logo.show-name.name-md .score { font-size:40px; }
+.pv-home.has-logo.show-name.name-lg .score,
+.pv-away.has-logo.show-name.name-lg .score { font-size:36px; }
 
 /* ── Centre info ── */
 .p-label  { font-size:8px;  font-weight:700; color:#f5c518; line-height:1.1; }
 .status   { font-size:7px;  font-weight:600; line-height:1.2; }
 .status.live   { color:#26e159; }
 .status.paused { color:#666677; }
-.clock    { font-size:14px; font-weight:700; color:#fff; letter-spacing:.5px; line-height:1.1; }
+.clock    { font-size:18px; font-weight:700; color:#fff; letter-spacing:.5px; line-height:1.1; }
 .remain   { font-size:6px;  color:#666677; line-height:1.2; }
 
 /* ── Status bar ── */
@@ -75,6 +107,17 @@ body {
 #notif .n-player { color:#fff; }
 #notif .n-min { color:#888; font-weight:400; }
 
+/* ── Sponsor full-board overlay ── */
+#sponsor-overlay {
+  grid-column:1/4; grid-row:1/3;
+  background:#000;
+  display:flex; align-items:center; justify-content:center;
+  opacity:0; pointer-events:none; transition:opacity .35s;
+  z-index:5;
+}
+#sponsor-overlay.visible { opacity:1; }
+#sponsor-overlay img { width:100%; height:100%; object-fit:contain; }
+
 /* ── No-signal overlay ── */
 #no-signal {
   position:fixed; bottom:4px; left:50%; transform:translateX(-50%);
@@ -89,8 +132,11 @@ body {
 
 <div id="board">
   <div class="pv-home">
-    <div class="team-name" id="home-name">HOME</div>
-    <div class="score"     id="home-score">0</div>
+    <img class="team-logo" id="home-logo" alt="" hidden>
+    <div class="brand-stack">
+      <div class="team-name" id="home-name">HOME</div>
+      <div class="score"     id="home-score">0</div>
+    </div>
   </div>
   <div class="pv-centre">
     <div class="p-label" id="p-label">H1</div>
@@ -99,13 +145,17 @@ body {
     <div class="remain"  id="remain">20m left</div>
   </div>
   <div class="pv-away">
-    <div class="team-name" id="away-name">AWAY</div>
-    <div class="score"     id="away-score">0</div>
+    <img class="team-logo" id="away-logo" alt="" hidden>
+    <div class="brand-stack">
+      <div class="team-name" id="away-name">AWAY</div>
+      <div class="score"     id="away-score">0</div>
+    </div>
   </div>
   <div class="pv-bar">
     <div class="dots" id="dots"></div>
     <div class="period-long" id="period-long">1st Half</div>
   </div>
+  <div id="sponsor-overlay"><img id="sponsor-img" alt=""></div>
 </div>
 
 <div id="notif">
@@ -117,47 +167,74 @@ body {
 <div id="no-signal">NO SIGNAL</div>
 
 <script>
-// ── Scale board to fill screen ────────────────────────────────────────────────
-// The board is a fixed 350×75 canvas matching the LED's native pixel grid
-// (four panels: 100|75|75|100 wide × 75 tall). The LED controller squashes
-// whatever HDMI signal it receives down to 350×75, so we stretch-fill by
-// default. On rotated displays (Windows set to portrait), we rotate the
-// board 90° so it still fills the screen correctly. A ?fit=contain query
-// param switches to aspect-preserving (letterbox) mode for test monitors.
-const BOARD_W = 350, BOARD_H = 75;
-const board    = document.getElementById('board');
-const fitMode  = new URLSearchParams(location.search).get('fit') || 'stretch';
+// ── Place + rotate the board on screen ────────────────────────────────────────
+// Production NUC defaults (set via the URL the user verified):
+//   w=350, h=75, pos=tr, rot=90, fit=native
+// The LED controller picks up a 75×350 region in the top-right of the HDMI
+// frame and renders it on the LED, so we draw the board at that exact spot.
+//
+// Query-string overrides for development on a regular monitor:
+//   ?fit=stretch        scale the board to fill the viewport
+//   ?fit=contain        uniform scale, letterboxed
+//   ?rot=0|90|180|270   override rotation
+//   ?pos=tl|tr|bl|br|c  pick a corner / centre
+//   ?w=350&h=75         override native LED size
+//
+const _qs   = new URLSearchParams(location.search);
+const BOARD_W = parseInt(_qs.get('w'), 10) || 350;
+const BOARD_H = parseInt(_qs.get('h'), 10) || 75;
+const ROT     = ((parseInt(_qs.get('rot'), 10)) || (_qs.has('rot') ? 0 : 90)) % 360;
+const POS     = _qs.get('pos') || 'tr';
+const FIT     = _qs.get('fit') || 'native';   // native | stretch | contain
+const board   = document.getElementById('board');
 
 function resize() {
   const vw = window.innerWidth, vh = window.innerHeight;
-  const portrait = vh > vw;
-  // In portrait we rotate the board 90° so its long side runs along the
-  // screen's long side. That means BOARD_W maps to vh, BOARD_H maps to vw.
-  const longSide  = portrait ? vh : vw;
-  const shortSide = portrait ? vw : vh;
+  const rot = ((ROT % 360) + 360) % 360;
+  const swap = (rot === 90 || rot === 270);
 
+  // Pick scale factors for the chosen fit mode.
+  // For rot 90/270, the rotated bounding box is (sy*H × sx*W).
   let sx, sy;
-  if (fitMode === 'contain') {
-    const s = Math.min(longSide / BOARD_W, shortSide / BOARD_H);
+  if (FIT === 'native') {
+    sx = sy = 1;
+  } else if (FIT === 'contain') {
+    const s = swap
+      ? Math.min(vw / BOARD_H, vh / BOARD_W)
+      : Math.min(vw / BOARD_W, vh / BOARD_H);
     sx = sy = s;
-  } else {
-    sx = longSide  / BOARD_W;
-    sy = shortSide / BOARD_H;
+  } else { // stretch
+    if (swap) { sy = vw / BOARD_H; sx = vh / BOARD_W; }
+    else      { sx = vw / BOARD_W; sy = vh / BOARD_H; }
   }
 
-  if (portrait) {
-    // Rotate 90° clockwise around origin, then translate into view.
-    // After rotate+scale, the board occupies (sy*BOARD_H) wide × (sx*BOARD_W) tall.
-    const w = sy * BOARD_H, h = sx * BOARD_W;
-    const tx = (vw + w) / 2;
-    const ty = (vh - h) / 2;
-    board.style.transform = `translate(${tx}px, ${ty}px) rotate(90deg) scale(${sx}, ${sy})`;
-  } else {
-    const w = sx * BOARD_W, h = sy * BOARD_H;
-    const tx = (vw - w) / 2;
-    const ty = (vh - h) / 2;
-    board.style.transform = `translate(${tx}px, ${ty}px) scale(${sx}, ${sy})`;
+  // Rotated, scaled bounding-box size.
+  const bw = swap ? sy * BOARD_H : sx * BOARD_W;
+  const bh = swap ? sx * BOARD_W : sy * BOARD_H;
+
+  // Top-left of the bbox in viewport coordinates, per pos.
+  let posX, posY;
+  switch (POS) {
+    case 'tl': posX = 0;            posY = 0;            break;
+    case 'tr': posX = vw - bw;      posY = 0;            break;
+    case 'bl': posX = 0;            posY = vh - bh;      break;
+    case 'br': posX = vw - bw;      posY = vh - bh;      break;
+    case 'c':
+    default:   posX = (vw - bw)/2;  posY = (vh - bh)/2;  break;
   }
+
+  // CSS transform list applies right-to-left: scale → rotate → translate.
+  // For each rotation the un-rotated origin (top-left) lands somewhere
+  // inside / outside the rotated bbox; offset translate accordingly so the
+  // bbox top-left sits at (posX, posY).
+  let tx, ty;
+  if      (rot === 0)   { tx = posX;       ty = posY; }
+  else if (rot === 90)  { tx = posX + bw;  ty = posY; }
+  else if (rot === 180) { tx = posX + bw;  ty = posY + bh; }
+  else                  { tx = posX;       ty = posY + bh; } // 270
+
+  board.style.transform =
+    `translate(${tx}px, ${ty}px) rotate(${rot}deg) scale(${sx}, ${sy})`;
   board.style.left = '0px';
   board.style.top  = '0px';
 }
@@ -255,9 +332,120 @@ function periodLong(p, t) {
 }
 
 // ── Render ────────────────────────────────────────────────────────────────────
+function applyTeamBrand(team, name, logoUrl, showName, nameSize) {
+  const panel = document.querySelector('.pv-' + team);
+  const logo  = document.getElementById(team + '-logo');
+  const nm    = document.getElementById(team + '-name');
+  panel.classList.remove('name-md', 'name-lg');
+  const sz = Number(nameSize) || 8;
+  if (sz >= 13)      panel.classList.add('name-lg');
+  else if (sz >= 10) panel.classList.add('name-md');
+  nm.style.fontSize = sz + 'px';
+  if (logoUrl) {
+    if (logo.getAttribute('src') !== logoUrl) logo.setAttribute('src', logoUrl);
+    logo.hidden = false;
+    panel.classList.add('has-logo');
+    if (showName) {
+      panel.classList.add('show-name');
+      nm.style.display = '';
+      nm.textContent = (name || '').toUpperCase().slice(0, 14);
+    } else {
+      panel.classList.remove('show-name');
+      nm.style.display = 'none';
+    }
+  } else {
+    logo.hidden = true;
+    logo.removeAttribute('src');
+    nm.style.display = '';
+    nm.textContent = (name || '').toUpperCase().slice(0, 14);
+    panel.classList.remove('has-logo');
+    panel.classList.remove('show-name');
+  }
+}
+
+// ── Sponsor rotation ──────────────────────────────────────────────────────────
+let sponsorTimer       = null;
+let sponsorIdx         = 0;
+let sponsorVisible     = false;
+let lastSponsorState   = null;
+let lastSponsorTrigger = 0;
+let sponsorReady       = false;
+
+function sponsorEligible(s) {
+  return !!(s && s.sponsor_enabled
+            && Array.isArray(s.sponsors) && s.sponsors.length > 0
+            && !(s.sponsor_only_when_paused && s.match_live));
+}
+function pickNextSponsor() {
+  const s = lastSponsorState;
+  if (!s || !Array.isArray(s.sponsors) || !s.sponsors.length) return null;
+  if (sponsorIdx >= s.sponsors.length) sponsorIdx = 0;
+  return s.sponsors[sponsorIdx++];
+}
+function showSponsor(sp) {
+  if (!sp) { console.warn('[sponsor] showSponsor called with nothing to show'); return; }
+  const durSec = Math.max(2, (lastSponsorState && lastSponsorState.sponsor_duration) || 8);
+  console.log('[sponsor] showing', sp.url, 'for', durSec + 's');
+  const img = document.getElementById('sponsor-img');
+  img.onerror = () => console.error('[sponsor] image failed to load:', sp.url);
+  img.src = sp.url;
+  document.getElementById('sponsor-overlay').classList.add('visible');
+  sponsorVisible = true;
+  clearTimeout(sponsorTimer);
+  sponsorTimer = setTimeout(() => { hideSponsor(); scheduleSponsorIdle(); }, durSec * 1000);
+}
+function showNextSponsor() {
+  if (!sponsorEligible(lastSponsorState)) { hideSponsor(); scheduleSponsorIdle(); return; }
+  showSponsor(pickNextSponsor());
+}
+function hideSponsor() {
+  document.getElementById('sponsor-overlay').classList.remove('visible');
+  sponsorVisible = false;
+}
+function scheduleSponsorIdle() {
+  clearTimeout(sponsorTimer); sponsorTimer = null;
+  if (!sponsorEligible(lastSponsorState)) return;
+  const intMs = Math.max(2, lastSponsorState.sponsor_interval || 30) * 1000;
+  sponsorTimer = setTimeout(showNextSponsor, intMs);
+}
+function reconcileSponsor(s) {
+  lastSponsorState = s;
+  if (!sponsorReady) {
+    // First render: sync without firing so an old trigger doesn't auto-show.
+    sponsorReady = true;
+    lastSponsorTrigger = (s && s.sponsor_trigger) || 0;
+    console.log('[sponsor] init',
+                'sponsors=' + ((s && s.sponsors && s.sponsors.length) || 0),
+                'enabled=' + !!(s && s.sponsor_enabled),
+                'trigger=' + lastSponsorTrigger);
+  } else if (s && s.sponsor_trigger && s.sponsor_trigger > lastSponsorTrigger) {
+    // Manual "Show now": bypass eligibility (works even when no rotation enabled).
+    lastSponsorTrigger = s.sponsor_trigger;
+    if (s.sponsors && s.sponsors.length) {
+      console.log('[sponsor] manual trigger fired');
+      showSponsor(pickNextSponsor());
+      return;
+    } else {
+      console.warn('[sponsor] trigger received but no sponsors uploaded');
+    }
+  }
+  if (!sponsorEligible(s)) {
+    if (sponsorVisible) hideSponsor();
+    clearTimeout(sponsorTimer); sponsorTimer = null;
+    return;
+  }
+  if (!sponsorTimer && !sponsorVisible) scheduleSponsorIdle();
+}
+
 function render(s) {
-  document.getElementById('home-name').textContent  = s.home_name.toUpperCase().slice(0, 14);
-  document.getElementById('away-name').textContent  = s.away_name.toUpperCase().slice(0, 14);
+  const homeShow = s.home_show_name !== false;
+  const awayShow = s.away_show_name !== false;
+  const sharedSize = s.name_size || 8;
+  applyTeamBrand('home', s.home_name, s.home_logo, homeShow, sharedSize);
+  applyTeamBrand('away', s.away_name, s.away_logo, awayShow, sharedSize);
+  document.querySelector('.pv-centre').classList.toggle('no-timer', s.show_timer === false);
+  document.getElementById('clock').style.fontSize = (s.clock_size || 18) + 'px';
+  reconcileSponsor(s);
   lang = T[s.lang] || T.nl;
   document.getElementById('no-signal').textContent = lang.noSignal;
 
@@ -269,13 +457,13 @@ function render(s) {
   if (s.home_color) {
     document.querySelector('.pv-home').style.background = s.home_color;
     const htc = isLight(s.home_color);
-    document.getElementById('home-name').style.color  = htc ? 'rgba(0,0,0,.5)'   : 'rgba(255,255,255,.45)';
+    document.getElementById('home-name').style.color  = s.home_name_color || (htc ? 'rgba(0,0,0,.5)' : 'rgba(255,255,255,.45)');
     document.getElementById('home-score').style.color = htc ? '#111' : '#fff';
   }
   if (s.away_color) {
     document.querySelector('.pv-away').style.background = s.away_color;
     const atc = isLight(s.away_color);
-    document.getElementById('away-name').style.color  = atc ? 'rgba(0,0,0,.5)'   : 'rgba(255,255,255,.45)';
+    document.getElementById('away-name').style.color  = s.away_name_color || (atc ? 'rgba(0,0,0,.5)' : 'rgba(255,255,255,.45)');
     document.getElementById('away-score').style.color = atc ? '#111' : '#fff';
   }
   document.getElementById('home-score').textContent = s.home_score;

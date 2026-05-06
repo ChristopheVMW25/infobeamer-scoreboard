@@ -7,7 +7,50 @@ const fs         = require('fs');
 // ── Session storage (JSON file, 30-day retention) ─────────────────────────────
 const DATA_DIR      = path.join(__dirname, 'data');
 const SESSIONS_FILE = path.join(DATA_DIR, 'sessions.json');
+const LOGOS_DIR     = path.join(DATA_DIR, 'logos');
+const SPONSORS_DIR  = path.join(DATA_DIR, 'sponsors');
 const RETENTION_MS  = 30 * 24 * 60 * 60 * 1000;
+const MAX_LOGO_BYTES = 1.5 * 1024 * 1024;
+const MIME_EXT = {
+  'image/png':     'png',
+  'image/jpeg':    'jpg',
+  'image/jpg':     'jpg',
+  'image/gif':     'gif',
+  'image/webp':    'webp',
+  'image/svg+xml': 'svg',
+};
+
+function ensureLogosDir() {
+  if (!fs.existsSync(LOGOS_DIR)) fs.mkdirSync(LOGOS_DIR, { recursive: true });
+}
+function findLogoFile(team) {
+  ensureLogosDir();
+  return fs.readdirSync(LOGOS_DIR).find(f => f.startsWith(team + '.'));
+}
+function deleteLogosFor(team) {
+  ensureLogosDir();
+  for (const f of fs.readdirSync(LOGOS_DIR)) {
+    if (f.startsWith(team + '.')) {
+      try { fs.unlinkSync(path.join(LOGOS_DIR, f)); } catch {}
+    }
+  }
+}
+function logoUrlFor(team) {
+  const f = findLogoFile(team);
+  return f ? `/logos/${f}?v=${Date.now()}` : '';
+}
+
+function ensureSponsorsDir() {
+  if (!fs.existsSync(SPONSORS_DIR)) fs.mkdirSync(SPONSORS_DIR, { recursive: true });
+}
+function listSponsors() {
+  ensureSponsorsDir();
+  const tag = Date.now();
+  return fs.readdirSync(SPONSORS_DIR)
+    .filter(f => /\.(png|jpe?g|gif|webp|svg)$/i.test(f))
+    .sort()
+    .map(f => ({ id: f, url: `/sponsors/${encodeURIComponent(f)}?v=${tag}` }));
+}
 
 function loadSessions() {
   try {
@@ -29,8 +72,12 @@ const app    = express();
 const server = http.createServer(app);
 const wss    = new WebSocketServer({ server });
 
-app.use(express.json());
+app.use(express.json({ limit: '2mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
+ensureLogosDir();
+ensureSponsorsDir();
+app.use('/logos',    express.static(LOGOS_DIR,    { maxAge: 0 }));
+app.use('/sponsors', express.static(SPONSORS_DIR, { maxAge: 0 }));
 app.get('/', (_req, res) => res.redirect('/controller.html'));
 
 // ── Match state ───────────────────────────────────────────────────────────────
@@ -41,6 +88,21 @@ let state = {
   away_score:    0,
   home_color:    '#0a1447',
   away_color:    '#420a0a',
+  home_logo:     '',
+  away_logo:     '',
+  home_show_name: true,
+  away_show_name: true,
+  home_name_color: '',
+  away_name_color: '',
+  name_size:       8,
+  show_timer:      true,
+  clock_size:      18,
+  sponsors:        [],
+  sponsor_enabled:          false,
+  sponsor_interval:         30,
+  sponsor_duration:         8,
+  sponsor_only_when_paused: true,
+  sponsor_trigger: 0,
   period:        1,
   total_periods: 2,
   duration_min:  20,
@@ -52,6 +114,11 @@ let state = {
   last_event:    null,
   event_seq:     0,
 };
+
+// Restore any persisted logos and sponsors on startup
+state.home_logo = logoUrlFor('home');
+state.away_logo = logoUrlFor('away');
+state.sponsors  = listSponsors();
 
 // ── Server-side clock ─────────────────────────────────────────────────────────
 let clockInterval = null;
@@ -145,6 +212,9 @@ wss.on('connection', (ws) => {
             state.events     = [];
             state.last_event = null;
             break;
+          case 'show_sponsor':
+            state.sponsor_trigger = (state.sponsor_trigger || 0) + 1;
+            break;
         }
         broadcast(state);
       }
@@ -176,9 +246,11 @@ app.post('/api/sessions', (_req, res) => {
     date:          new Date().toISOString(),
     home_name:     state.home_name,
     home_color:    state.home_color,
+    home_logo:     state.home_logo,
     home_score:    state.home_score,
     away_name:     state.away_name,
     away_color:    state.away_color,
+    away_logo:     state.away_logo,
     away_score:    state.away_score,
     total_periods: state.total_periods,
     duration_min:  state.duration_min,
@@ -187,6 +259,76 @@ app.post('/api/sessions', (_req, res) => {
   list = [session, ...list];
   saveSessions(list);
   res.json({ ok: true, session });
+});
+
+// ── Logo upload / delete ──────────────────────────────────────────────────────
+app.post('/api/logo/:team', (req, res) => {
+  const team = req.params.team;
+  if (team !== 'home' && team !== 'away') {
+    return res.status(400).json({ error: 'invalid team' });
+  }
+  const dataUrl = req.body && req.body.data;
+  if (typeof dataUrl !== 'string') {
+    return res.status(400).json({ error: 'missing data' });
+  }
+  const m = /^data:([^;]+);base64,(.+)$/.exec(dataUrl);
+  if (!m) return res.status(400).json({ error: 'invalid data url' });
+  const mime = m[1].toLowerCase();
+  const ext  = MIME_EXT[mime];
+  if (!ext) return res.status(400).json({ error: 'unsupported image type' });
+  const buf = Buffer.from(m[2], 'base64');
+  if (buf.length === 0)               return res.status(400).json({ error: 'empty image' });
+  if (buf.length > MAX_LOGO_BYTES)    return res.status(413).json({ error: 'image too large' });
+
+  deleteLogosFor(team);
+  ensureLogosDir();
+  fs.writeFileSync(path.join(LOGOS_DIR, team + '.' + ext), buf);
+  state[team + '_logo'] = `/logos/${team}.${ext}?v=${Date.now()}`;
+  broadcast(state);
+  res.json({ ok: true, url: state[team + '_logo'] });
+});
+
+app.delete('/api/logo/:team', (req, res) => {
+  const team = req.params.team;
+  if (team !== 'home' && team !== 'away') {
+    return res.status(400).json({ error: 'invalid team' });
+  }
+  deleteLogosFor(team);
+  state[team + '_logo'] = '';
+  broadcast(state);
+  res.json({ ok: true });
+});
+
+// ── Sponsors (multi-image rotation) ──────────────────────────────────────────
+app.post('/api/sponsors', (req, res) => {
+  const dataUrl = req.body && req.body.data;
+  if (typeof dataUrl !== 'string') return res.status(400).json({ error: 'missing data' });
+  const m = /^data:([^;]+);base64,(.+)$/.exec(dataUrl);
+  if (!m) return res.status(400).json({ error: 'invalid data url' });
+  const ext = MIME_EXT[m[1].toLowerCase()];
+  if (!ext) return res.status(400).json({ error: 'unsupported image type' });
+  const buf = Buffer.from(m[2], 'base64');
+  if (buf.length === 0)            return res.status(400).json({ error: 'empty image' });
+  if (buf.length > MAX_LOGO_BYTES) return res.status(413).json({ error: 'image too large' });
+
+  ensureSponsorsDir();
+  const rawName = (req.body && req.body.name) ? String(req.body.name) : 'sponsor';
+  const safe    = rawName.replace(/[^\w-]+/g, '_').slice(0, 40) || 'sponsor';
+  const id      = `${Date.now()}-${safe}.${ext}`;
+  fs.writeFileSync(path.join(SPONSORS_DIR, id), buf);
+  state.sponsors = listSponsors();
+  broadcast(state);
+  res.json({ ok: true, id });
+});
+
+app.delete('/api/sponsors/:id', (req, res) => {
+  const id = req.params.id;
+  // strict allow-list for filenames (server-generated)
+  if (!/^[\w.-]+$/.test(id)) return res.status(400).json({ error: 'bad id' });
+  try { fs.unlinkSync(path.join(SPONSORS_DIR, id)); } catch {}
+  state.sponsors = listSponsors();
+  broadcast(state);
+  res.json({ ok: true });
 });
 
 app.delete('/api/sessions/:id', (req, res) => {
